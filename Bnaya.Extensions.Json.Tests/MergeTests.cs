@@ -1,0 +1,282 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+
+using Xunit;
+using Xunit.Abstractions;
+
+using static System.Text.Json.Extension.Constants;
+
+namespace System.Text.Json.Extension.Extensions.Tests
+{
+    public class MergeTests
+    {
+        private static JsonElement Empty = CreateEmptyJsonElement();
+
+
+        private readonly ITestOutputHelper _outputHelper;
+
+        #region Ctor
+
+        public MergeTests(ITestOutputHelper outputHelper)
+        {
+            _outputHelper = outputHelper;
+        }
+
+        #endregion Ctor
+
+        #region Write
+
+        private void Write(JsonElement expected, JsonElement result, JsonElement source, IEnumerable<JsonElement> joined)
+        {
+            _outputHelper.WriteLine("Expected:-----------------");
+            _outputHelper.WriteLine(expected.AsString());
+            _outputHelper.WriteLine("Result:-----------------");
+            _outputHelper.WriteLine(result.AsString());
+            _outputHelper.WriteLine("");
+            _outputHelper.WriteLine("Source:-----------------");
+            _outputHelper.WriteLine(source.AsString());
+            int i = 0;
+            foreach (var item in joined)
+            {
+                _outputHelper.WriteLine($"Element [{i++}]:-----------------");
+                _outputHelper.WriteLine(item.AsString());
+            }
+        }
+
+        #endregion // Write
+
+        #region Merge_Theory_Test
+
+        [Theory]
+        [InlineData("{'A':1, 'B':2}", "{'A':1}", "{'B':2}")]
+        [InlineData("{'A':1, 'B':2, 'C':3}", "{'A':1}", "{'B':2}", "{'C':3}")]
+        [InlineData("{'A':2, 'B':3, 'C':3}", "{'A':1}", "{'A':2, 'B':2}", "{'B':3, 'C':3}")]
+        [InlineData("{'A':2, 'B':3, 'C':[1,2,3]}", "{'A':1}", "{'A':2, 'B':[2,4,6],'C':'Z'}", "{'B':3, 'C':[1,2,3]}")]
+        [InlineData("[1,2,3,4,5,6]", "[1,2,3]", "[4,5,6]")]
+        [InlineData("[1,2,3,3,4,5,6]", "[1,2,3]", "[3,4,5,6]")]
+        [InlineData("[1,2,3,'3','4','5','6']", "[1,2,3]", "['3','4','5','6']")]
+        [InlineData("{'A':1}", "[1,2,3]", "{'A':1}")]
+        [InlineData("[1,2,3]", "{'A':1}", "[1,2,3]")]
+        [InlineData("{'A':2}", "{'A':{'A1':1}}", "{'A':2}")]
+        [InlineData("{'A':{'A1':1,'A2':2}}", "{'A':{'A1':1}}", "{'A':{'A2':2}}")]
+        [InlineData("{\"name\":\"env level\",\"role\":\"me too\"}", "{\"name\":\"env level\",\"role\":\"1234\"}", "{\"role\":\"me too\"}")]
+        public void Merge_Theory_Test(string expected, string source, params string[] joined)
+        {
+            var sourceElement = JsonDocument.Parse(source.Replace('\'', '"')).RootElement;
+            var joinedElement = joined.Select(b => JsonDocument.Parse(b.Replace('\'', '"')).RootElement);
+            var expectedResult = JsonDocument.Parse(expected.Replace('\'', '"')).RootElement;
+            var merged = sourceElement.Merge(joinedElement);
+
+            Write(expectedResult, merged, sourceElement, joinedElement);
+
+            Assert.Equal(expectedResult.AsString(), merged.AsString());
+        }
+
+        #endregion // Merge_Theory_Test
+
+        #region Merge_Object_Test
+
+        [Fact]
+        public void Merge_Object_Test()
+        {
+            var sourceElement = JsonDocument.Parse("{'A':1}".Replace('\'', '"')).RootElement;
+            var joinedElement = new { B = 2 };
+            var expectedResult = JsonDocument.Parse("{'A':1, 'b':2}".Replace('\'', '"')).RootElement;
+            var merged = sourceElement.Merge(joinedElement);
+
+            Write(expectedResult, merged, sourceElement, new[] { joinedElement.ToJson() });
+
+            Assert.Equal(expectedResult.AsString(), merged.AsString());
+        }
+
+        #endregion // Merge_Object_Test
+
+        #region Merge_JsonObject_Override_Test
+
+        [Fact]
+        public void Merge_JsonObject_Override_Test()
+        {
+            var sourceElement = JsonDocument.Parse("{'a':1, 'c':3}".Replace('\'', '"')).RootElement;
+            var joinedElement = new { A = 2, B = 2 }.ToJson();
+            var expectedResult = JsonDocument.Parse("{'a':2, 'c':3, 'b':2}".Replace('\'', '"')).RootElement;
+            var merged = sourceElement.Merge<JsonElement>(joinedElement);
+
+            Write(expectedResult, merged, sourceElement, new[] { joinedElement.ToJson() });
+
+            Assert.Equal(expectedResult.AsString(), merged.AsString());
+        }
+
+        #endregion // Merge_JsonObject_Override_Test
+
+        #region Merge_Object_Override_Test
+
+        [Fact]
+        public void Merge_Object_Override_Test()
+        {
+            var sourceElement = JsonDocument.Parse("{'a':1, 'c':3}".Replace('\'', '"')).RootElement;
+            var joinedElement = new { A = 2, B = 2 };
+            var expectedResult = JsonDocument.Parse("{'a':2, 'c':3, 'b':2}".Replace('\'', '"')).RootElement;
+            var merged = sourceElement.Merge(joinedElement);
+
+            Write(expectedResult, merged, sourceElement, new[] { joinedElement.ToJson() });
+
+            Assert.Equal(expectedResult.AsString(), merged.AsString());
+        }
+
+        #endregion // Merge_Object_Override_Test
+
+        #region MergeInto_Object_Test
+
+        [Fact]
+        public void MergeInto_Object_Test()
+        {
+            var sourceElement = JsonDocument.Parse("{'A':1,'B':{'B1':[1,2,3]}}".Replace('\'', '"')).RootElement;
+            var joinedElement = new { X = "Y" };
+            var expectedResult = JsonDocument.Parse("{'A':1, 'B':{'B1':[1,{'x':'Y'},3]}}".Replace('\'', '"')).RootElement;
+            var merged = sourceElement.MergeInto("B.B1.[1]", joinedElement);
+
+            Write(expectedResult, merged, sourceElement, new[] { joinedElement.ToJson() });
+
+            Assert.Equal(expectedResult.AsString(), merged.AsString());
+        }
+
+        #endregion // MergeInto_Object_Test
+
+        #region MergeInto_Theory_Test
+
+        [Theory]
+
+        [InlineData("NOT_EXISTS",
+            """{ "C": { "D": { "X":1, "Y":2 } } }""",
+            """{ "C": { "D": { "X":1, "Y":2 } } }""",
+            """{ "Z": 3}""")]
+        [InlineData("C.D",
+            """{ "A": 1, "B": { "B1":[1, 2, 3] }, "C": { "D": { "X":1, "Y":2, "Z": 3 } } }""",
+            """{ "A": 1, "B": { "B1":[1, 2, 3] }, "C": { "D": { "X":1, "Y":2 } } }""",
+            """{ "Z": 3}""")]
+        [InlineData("C.D.X",
+            """{ "A": 1, "B": { "B1":[1, 2, 3] }, "C": { "D": { "X":100, "Y":2 } } }""",
+            """{ "A": 1, "B": { "B1":[1, 2, 3] }, "C": { "D": { "X":1, "Y":2 } } }""",
+            """100""")]
+        [InlineData("B", "{'A':1, 'B':{'B1':3, 'C':[1,2,3]}}", "{'A':1,'B': {'B1':1}}", "{'B1':3, 'C':[1,2,3]}")]
+        [InlineData("B.B1.[1]", "{'A':1, 'B':{'B1':[1,5,3]}}", "{'A':1,'B':{'B1':[1,2,3]}}", "5")]
+        [InlineData("B.B1.[1]", "{'A':1, 'B':{'B1':[1,{'X':'Y'},3]}}", "{'A':1,'B':{'B1':[1,2,3]}}", "{'X':'Y'}")]
+        [InlineData("B.B1.[]", "{'A':1, 'B':{'B1':[{'X':'Y'},{'X':'Y'},{'X':'Y'}]}}", "{'A':1,'B':{'B1':[1,2,3]}}", "{'X':'Y'}")]
+        public void MergeInto_Theory_Test(string path, string expected, string source, params string[] joined)
+        {
+            var sourceElement = JsonDocument.Parse(source.Replace('\'', '"')).RootElement;
+            var joinedElement = joined.Select(b => JsonDocument.Parse(b.Replace('\'', '"')).RootElement);
+            var expectedResult = JsonDocument.Parse(expected.Replace('\'', '"')).RootElement;
+            var merged = sourceElement.MergeInto(path, joinedElement);
+
+            Write(expectedResult, merged, sourceElement, joinedElement);
+
+            Assert.Equal(expectedResult.AsString(), merged.AsString());
+        }
+
+        #endregion // MergeInto_Theory_Test
+
+        #region MergeInto_primitives_Theory_Test
+
+        [Theory]
+
+        [InlineData("C.D.X",
+            """{ "A": 1, "B": { "B1":[1, 2, 3] }, "C": { "D": { "X":100, "Y":2 } } }""",
+            """{ "A": 1, "B": { "B1":[1, 2, 3] }, "C": { "D": { "X":1, "Y":2 } } }""",
+            100)]
+        public void MergeInto_primitives_Theory_Test(string path, string expected, string source, int joined)
+        {
+            var sourceElement = JsonDocument.Parse(source.Replace('\'', '"')).RootElement;
+            var expectedResult = JsonDocument.Parse(expected.Replace('\'', '"')).RootElement;
+            var merged = sourceElement.MergeInto(path, joined);
+
+            // Write(expectedResult, merged, sourceElement, joined);
+
+            Assert.Equal(expectedResult.AsString(), merged.AsString());
+        }
+
+        #endregion // MergeInto_primitives_Theory_Test
+
+        #region JSON_INDENT, JSON2_INDENT, JSON3_INDENT
+
+        private const string JSON1_INDENT =
+@"{
+  ""A"": 12
+}
+";
+        private const string JSON2_INDENT =
+@"{
+  ""B"": {
+    ""B1"": ""Cool"",
+    ""B2"": {
+        ""B21"": {
+          ""B211"": 211
+        },
+        ""B22"": 22    
+    }
+  }
+}
+";
+
+        private const string JSON3_INDENT =
+@"{
+  ""C"": [1, 2, 3]
+}
+";
+
+        #endregion // JSON_INDENT, JSON2_INDENT, JSON3_INDENT
+
+        #region Merge_Into_Object_Test
+
+        [Fact]
+        public void Merge_Into_Object_Test()
+        {
+            var source = JsonDocument.Parse(JSON2_INDENT).RootElement;
+            var element = JsonDocument.Parse(JSON1_INDENT).RootElement;
+            var merged = source.MergeInto("B.B2", element);
+
+            Write(merged, Empty, source, new[] { element });
+
+            Assert.Equal(JsonValueKind.Object, merged.ValueKind);
+            Assert.False(merged.TryGetProperty("A", out _));
+            Assert.True(merged.TryGetProperty("B", out var b));
+            Assert.True(b.TryGetProperty("B1", out _));
+            Assert.True(b.TryGetProperty("B2", out var b2));
+            Assert.True(b2.TryGetProperty("B21", out _));
+            Assert.True(b2.TryGetProperty("B22", out _));
+            Assert.True(b2.TryGetProperty("A", out _));
+        }
+
+        #endregion // Merge_Into_Object_Test
+
+        #region Merge_Into_MultiObject_Test
+
+        [Fact]
+        public void Merge_Into_MultiObject_Test()
+        {
+
+            var source = JsonDocument.Parse(JSON2_INDENT).RootElement;
+            var element1 = JsonDocument.Parse(JSON1_INDENT).RootElement;
+            var element2 = JsonDocument.Parse(JSON3_INDENT).RootElement;
+            var merged = source.MergeInto("B.B2", element1, element2);
+
+            Write(merged, Empty, source, new[] { element1, element2 });
+
+            Assert.Equal(JsonValueKind.Object, merged.ValueKind);
+            Assert.False(merged.TryGetProperty("A", out _));
+            Assert.True(merged.TryGetProperty("B", out var b));
+            Assert.True(b.TryGetProperty("B1", out _));
+            Assert.True(b.TryGetProperty("B2", out var b2));
+            Assert.True(b2.TryGetProperty("B21", out _));
+            Assert.True(b2.TryGetProperty("B22", out _));
+            Assert.True(b2.TryGetProperty("A", out _));
+            Assert.True(b2.TryGetProperty("C", out var c));
+            Assert.Equal(1, c[0].GetInt16());
+            Assert.Equal(2, c[1].GetInt16());
+            Assert.Equal(3, c[2].GetInt16());
+        }
+
+        #endregion // Merge_Into_MultiObject_Test
+    }
+}

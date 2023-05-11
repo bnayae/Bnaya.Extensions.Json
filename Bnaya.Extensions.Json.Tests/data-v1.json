@@ -1,0 +1,21 @@
+{
+  "name": "bnaya",
+  "role": "user",
+  "stars": 5,
+  "tags": [ "A", "B" ],
+  "color":  "red",
+  "headers": {
+    "Head1": "Blue",
+    "Head2": "Green"
+  },
+  "kvs": {
+    "X": {
+      "key": "A",
+      "value": "Cyan"
+    },
+    "Y": {
+      "key": "B",
+      "value": "DarkBlue"
+    }
+  }
+}

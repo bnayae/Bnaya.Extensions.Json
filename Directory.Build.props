@@ -1,0 +1,45 @@
+<Project>
+	<PropertyGroup>
+		<Version>5.1.150</Version>
+		<PackageReleaseNotes>
+		</PackageReleaseNotes>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<LangVersion>11.0</LangVersion>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Configurations>Debug;Release</Configurations>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryUrl>https://github.com/weknow-network/Weknow-Json-Extensions</RepositoryUrl>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageIconUrl />
+		<PackageTags>json, bnaya</PackageTags>
+		<Copyright>Bnaya ©</Copyright>
+		<Authors>Bnaya</Authors>
+		<Company>Bnaya</Company>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<IncludeSource>True</IncludeSource>
+		<IncludeSymbols>True</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<IsPackable>true</IsPackable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageReleaseNotes></PackageReleaseNotes>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="icon.png">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
+</Project>
