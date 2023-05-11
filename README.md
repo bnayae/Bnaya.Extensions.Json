@@ -1,7 +1,4 @@
-# Weknow Json Extensions  
-
-[![Prepare](https://github.com/weknow-network/Weknow-Json-Extensions/actions/workflows/prepare-nuget.yml/badge.svg)](https://github.com/weknow-network/Weknow-Json-Extensions/actions/workflows/prepare-nuget.yml) [![Build & Deploy NuGet](https://github.com/weknow-network/Weknow-Json-Extensions/actions/workflows/Deploy.yml/badge.svg)](https://github.com/weknow-network/Weknow-Json-Extensions/actions/workflows/Deploy.yml)  
-[![NuGet](https://img.shields.io/nuget/v/Weknow.Text.Json.Extensions.svg)](https://www.nuget.org/packages/Weknow.Text.Json.Extensions/)  
+# Bnaya Json Extensions  
 
 Functionality of this library includes:
 
