@@ -1,5 +1,9 @@
 # Bnaya Json Extensions  
 
+[![Build & Deploy NuGet](https://github.com/bnayae/Bnaya.Extensions.Json/actions/workflows/Deploy.yml/badge.svg)](https://github.com/bnayae/Bnaya.Extensions.Json/actions/workflows/Deploy.yml)  
+
+[![NuGet](https://img.shields.io/nuget/v/Bnaya.Extensions.Json.svg)](https://www.nuget.org/packages/Bnaya.Extensions.Json/) 
+
 Functionality of this library includes:
 
 - [ToEnumerable](#ToEnumerable)
