@@ -1,6 +1,6 @@
 ﻿// credit: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-converters-how-to
 
-namespace System.Text.Json
+namespace Bnaya.Extensions.Json.deprecated
 {
     /// <summary>
     /// Determine the traversing flow for re-write of json

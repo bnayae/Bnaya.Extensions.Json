@@ -17,7 +17,6 @@ namespace System.Text.Json.Extension.Extensions.Tests
 
         #endregion Ctor
 
-
         #region Keep_Test
 
         [Theory]

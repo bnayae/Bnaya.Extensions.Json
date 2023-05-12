@@ -5,6 +5,7 @@ namespace System.Text.Json
     /// <summary>
     /// Traverse flow instruction, how to proceed.
     /// </summary>
+    [Obsolete("deprecated")]
     public record struct TraverseFlowInstruction
     {
         #region Drill
@@ -13,7 +14,7 @@ namespace System.Text.Json
         /// Instruct to continue into children.
         /// </summary>
         /// <returns></returns>
-        public static TraverseFlowInstruction Drill { get; } = Do(TraverseFlow.Drill);
+        public static TraverseFlowInstruction Drill { get; } = Do(TraverseFlowDeprecated.Drill);
 
         #endregion // Drill
 
@@ -23,7 +24,7 @@ namespace System.Text.Json
         /// Instruct to continue on next sibling.
         /// </summary>
         /// <returns></returns>
-        public static TraverseFlowInstruction Skip { get; } = Do(TraverseFlow.Skip);
+        public static TraverseFlowInstruction Skip { get; } = Do(TraverseFlowDeprecated.Skip);
 
         #endregion // Skip
 
@@ -33,7 +34,7 @@ namespace System.Text.Json
         /// Instruct to skip all sibling.
         /// </summary>
         /// <returns></returns>
-        public static TraverseFlowInstruction SkipToParent { get; } = Do(TraverseFlow.SkipToParent);
+        public static TraverseFlowInstruction SkipToParent { get; } = Do(TraverseFlowDeprecated.SkipToParent);
 
         #endregion // SkipToParent
 
@@ -53,7 +54,7 @@ namespace System.Text.Json
         /// Instruct to yield and continue on skip all sibling.
         /// </summary>
         /// <returns></returns>
-        public static TraverseFlowInstruction YieldAndSkipToParent { get; } = Do(true, TraverseFlow.SkipToParent);
+        public static TraverseFlowInstruction YieldAndSkipToParent { get; } = Do(true, TraverseFlowDeprecated.SkipToParent);
 
         #endregion // YieldAndSkipToParent
 
@@ -67,7 +68,7 @@ namespace System.Text.Json
         /// <returns></returns>
         public static TraverseFlowInstruction Do(
                         bool pick,
-                        TraverseFlow flow = TraverseFlow.SkipWhenMatch) =>
+                        TraverseFlowDeprecated flow = TraverseFlowDeprecated.SkipWhenMatch) =>
                                                 new TraverseFlowInstruction(pick, flow);
 
         /// <summary>
@@ -76,7 +77,7 @@ namespace System.Text.Json
         /// <param name="flow">Instruct how to continue</param>
         /// <param name="pick">When true: result with yield</param>
         /// <returns></returns>
-        public static TraverseFlowInstruction Do(TraverseFlow flow, bool pick = false) =>
+        public static TraverseFlowInstruction Do(TraverseFlowDeprecated flow, bool pick = false) =>
                                                 new TraverseFlowInstruction(pick, flow);
 
         #endregion // Do
@@ -88,7 +89,7 @@ namespace System.Text.Json
         /// </summary>
         /// <param name="pick">if set to <c>true</c> [pick].</param>
         /// <param name="flow">The flow.</param>
-        public TraverseFlowInstruction(bool pick, TraverseFlow flow)
+        public TraverseFlowInstruction(bool pick, TraverseFlowDeprecated flow)
         {
             this.Pick = pick;
             Flow = flow;
@@ -110,7 +111,7 @@ namespace System.Text.Json
         /// <summary>
         /// Instruct how to continue
         /// </summary>
-        public TraverseFlow Flow { get; }
+        public TraverseFlowDeprecated Flow { get; }
 
         #endregion // Flow
 
@@ -122,7 +123,7 @@ namespace System.Text.Json
         /// <param name="pick">When true: result with yield.</param>
         /// <param name="flow">Instruct how to continue.</param>
         /// <returns></returns>
-        public void Deconstruct(out bool pick, out TraverseFlow flow)
+        public void Deconstruct(out bool pick, out TraverseFlowDeprecated flow)
         {
             pick = Pick;
             flow = Flow;

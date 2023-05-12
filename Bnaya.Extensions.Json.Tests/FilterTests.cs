@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-
+using Bnaya.Extensions.Json.deprecated;
 using FakeItEasy;
 
 using Xunit;

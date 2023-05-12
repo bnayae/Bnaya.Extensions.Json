@@ -4,14 +4,14 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Text.RegularExpressions;
 using System.Threading;
 
-using static System.Text.Json.Extension.Constants;
-using static System.Text.Json.TraverseFlowInstruction;
+using Bnaya.Extensions.Json.deprecated;
 
+using static System.Text.Json.Extension.Constants;
 
 // credit: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-converters-how-to
+using static System.Text.Json.TraverseFlowControl;
 
 namespace System.Text.Json;
 
@@ -19,7 +19,7 @@ namespace System.Text.Json;
 /// <summary>
 /// Json extensions
 /// </summary>
-public static class JsonExtensions
+public static partial class JsonExtensions
 {
     private static JsonWriterOptions INDENTED_JSON_OPTIONS = new JsonWriterOptions { Indented = true };
 
@@ -31,29 +31,32 @@ public static class JsonExtensions
     /// <param name="path">The path.</param>
     /// <param name="caseSensitive">if set to <c>true</c> [case sensitive].</param>
     /// <returns></returns>
-    private static Func<JsonElement, int, IImmutableList<string>, TraverseFlowInstruction> CreatePathFilter(string path, bool caseSensitive = false)
+    private static Func<JsonElement, int, IImmutableList<string>, TraverseFlowControl> CreatePathFilter(
+                                string path,
+                                bool caseSensitive = false)
     {
         var filter = path.Split('.');
 
-        return (current, deep, breadcrumbs) =>
+        TraverseFlowControl Predicate(JsonElement current, int deep, IImmutableList<string> breadcrumbs)
         {
             var cur = breadcrumbs[deep];
             var validationPath = filter.Length > deep ? filter[deep] : "";
             if (validationPath == "*" || string.Compare(validationPath, cur, !caseSensitive) == 0)
             {
                 if (deep == filter.Length - 1)
-                    return Yield;
-                return Drill;
+                    return MarkToSibling;
+                return SkipToChildren;
             }
             if (validationPath == "[]" && cur[0] == '[' && cur[^1] == ']')
             {
                 if (deep == filter.Length - 1)
-                    return Yield;
-                return Drill;
+                    return MarkToSibling;
+                return SkipToChildren;
             }
 
-            return Skip;
-        };
+            return SkipToSibling;
+        }
+        return Predicate;
     }
 
     #endregion // CreatePathFilter
@@ -136,173 +139,10 @@ public static class JsonExtensions
             }
 
             return TraverseFlowWrite.Drill;
-        };
+        }
     }
 
     #endregion // CreateExcludePathWriteFilter
-
-    #region ToEnumerable
-
-    /// <summary>
-    /// Filters descendant element by path.
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="path">The path.</param>
-    /// <returns></returns>
-    public static IEnumerable<JsonElement> ToEnumerable(
-        this JsonDocument source,
-        string path)
-    {
-        return source.RootElement.ToEnumerable(path);
-    }
-
-    /// <summary>
-    /// Filters descendant element by path.
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="path">The path.</param>
-    /// <returns></returns>
-    public static IEnumerable<JsonElement> ToEnumerable(
-        this in JsonElement source,
-        string path)
-    {
-        return source.ToEnumerable(false, path);
-    }
-
-    /// <summary>
-    /// Filters descendant element by path.
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="caseSensitive">indicate whether path should be a case sensitive</param>
-    /// <param name="path">The path.</param>
-    /// <returns></returns>
-    public static IEnumerable<JsonElement> ToEnumerable(
-        this in JsonElement source,
-        bool caseSensitive,
-        string path)
-    {
-        Func<JsonElement, int, IImmutableList<string>, TraverseFlowInstruction> predicate =
-            CreatePathFilter(path, caseSensitive);
-        return source.ToEnumerable(0, ImmutableList<string>.Empty, predicate);
-    }
-
-    /// <summary>
-    /// Filters descendant element by predicate.
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="predicate">
-    /// <![CDATA[The predicate: (current, deep, breadcrumbs spine) => ...;
-    /// current: the current JsonElement.
-    /// deep: start at 0.
-    /// breadcrumbs spine: spine of ancestor's properties and arrays index.
-    /// TIP: using static System.Text.Json.TraverseFlowInstruction;]]>
-    /// </param>
-    /// <returns></returns>
-    public static IEnumerable<JsonElement> ToEnumerable(
-        this JsonDocument source,
-        Func<JsonElement, int, IImmutableList<string>, TraverseFlowInstruction> predicate)
-    {
-        return source.RootElement.ToEnumerable(0, ImmutableList<string>.Empty, predicate);
-    }
-
-    /// <summary>
-    /// Filters descendant element by predicate.
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="predicate">
-    /// <![CDATA[The predicate: (current, deep, breadcrumbs spine) => ...;
-    /// current: the current JsonElement.
-    /// deep: start at 0.
-    /// breadcrumbs spine: spine of ancestor's properties and arrays index.
-    /// TIP: using static System.Text.Json.TraverseFlowInstruction;]]>
-    /// </param>
-    /// <returns></returns>
-    public static IEnumerable<JsonElement> ToEnumerable(this in JsonElement source, Func<JsonElement, int, IImmutableList<string>, TraverseFlowInstruction> predicate)
-    {
-        return source.ToEnumerable(0, ImmutableList<string>.Empty, predicate);
-    }
-
-    /// <summary>
-    /// Filters descendant element by predicate.
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="deep">The deep.</param>
-    /// <param name="spine">The breadcrumbs spine.</param>
-    /// <param name="predicate">
-    /// <![CDATA[The predicate: (current, deep, breadcrumbs spine) => ...;
-    /// current: the current JsonElement.
-    /// deep: start at 0.
-    /// breadcrumbs spine: spine of ancestor's properties and arrays index.
-    /// TIP: using static System.Text.Json.TraverseFlowInstruction;]]>
-    /// </param>
-    /// <returns></returns>
-    private static IEnumerable<JsonElement> ToEnumerable(
-                            this JsonElement source,
-                            int deep,
-                            IImmutableList<string> spine,
-                            Func<JsonElement, int, IImmutableList<string>, TraverseFlowInstruction> predicate)
-    {
-        if (source.ValueKind == JsonValueKind.Object)
-        {
-            foreach (JsonProperty p in source.EnumerateObject())
-            {
-                var spn = spine.Add(p.Name);
-                var val = p.Value;
-                var (pick, flow) = predicate(val, deep, spn);
-                if (pick)
-                {
-                    yield return val;
-                    if (flow == TraverseFlow.SkipWhenMatch)
-                        continue;
-                }
-                else if (flow == TraverseFlow.SkipWhenMatch)
-                    flow = TraverseFlow.Drill;
-                if (flow == TraverseFlow.Skip)
-                    continue;
-                if (flow == TraverseFlow.SkipToParent)
-                    break;
-                if (flow == TraverseFlow.Drill)
-                {
-                    foreach (var result in val.ToEnumerable(deep + 1, spn, predicate))
-                    {
-                        yield return result;
-                    }
-                }
-            }
-        }
-        else if (source.ValueKind == JsonValueKind.Array)
-        {
-            int i = 0;
-            foreach (JsonElement val in source.EnumerateArray())
-            {
-                var spn = spine.Add($"[{i++}]");
-                var (shouldYield, flowStrategy) = predicate(val, deep, spn);
-                if (shouldYield)
-                {
-                    yield return val;
-                    if (flowStrategy == TraverseFlow.SkipWhenMatch)
-                        continue;
-                }
-                else if (flowStrategy == TraverseFlow.SkipWhenMatch)
-                    flowStrategy = TraverseFlow.Drill;
-
-                if (flowStrategy == TraverseFlow.Skip)
-                    continue;
-                if (flowStrategy == TraverseFlow.SkipToParent)
-                    break;
-                if (flowStrategy == TraverseFlow.Drill)
-                {
-                    foreach (var result in val.ToEnumerable(deep + 1, spn, predicate))
-                    {
-                        yield return result;
-                    }
-                }
-            }
-        }
-
-    }
-
-    #endregion // ToEnumerable
 
     #region Keep
 
@@ -645,10 +485,7 @@ public static class JsonExtensions
     /// <returns></returns>
     public static JsonElement Merge(
         this JsonDocument source,
-        params JsonElement[] joined)
-    {
-        return source.RootElement.Merge(joined);
-    }
+        params JsonElement[] joined) => source.RootElement.Merge(joined);
 
     /// <summary>
     /// Merge source json with other json (which will override the source on conflicts)
@@ -690,6 +527,40 @@ public static class JsonExtensions
         IEnumerable<JsonElement> joined)
     {
         return joined.Aggregate(source, (acc, cur) => acc.MergeImp(cur));
+    }
+
+    /// <summary>
+    /// Merge source json with other json (which will override the source on conflicts)
+    /// Array will be concatenate.
+    /// </summary>
+    /// <param name="source">The source.</param>
+    /// <param name="joined">The joined element (will override on conflicts).</param>
+    /// <param name="options">Serialization options</param>
+    /// <returns></returns>
+    public static JsonElement Merge<T>(
+        this JsonDocument source,
+        T joined,
+        JsonSerializerOptions? options = null)
+    {
+        var j = joined.ToJson(options);
+        return source.RootElement.MergeImp(j);
+    }
+
+    /// <summary>
+    /// Merge source json with other json (which will override the source on conflicts)
+    /// Array will be concatenate.
+    /// </summary>
+    /// <param name="source">The source.</param>
+    /// <param name="joined">The joined element (will override on conflicts).</param>
+    /// <param name="options">Serialization options</param>
+    /// <returns></returns>
+    public static JsonElement Merge<T>(
+        this in JsonElement source,
+        T joined,
+        JsonSerializerOptions? options = null)
+    {
+        var j = joined.ToJson(options);
+        return source.MergeImp(j);
     }
 
     /// <summary>
@@ -793,41 +664,6 @@ public static class JsonExtensions
             joined.WriteTo(writer);
         }
     }
-
-    /// <summary>
-    /// Merge source json with other json (which will override the source on conflicts)
-    /// Array will be concatenate.
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="joined">The joined element (will override on conflicts).</param>
-    /// <param name="options">Serialization options</param>
-    /// <returns></returns>
-    public static JsonElement Merge<T>(
-        this JsonDocument source,
-        T joined,
-        JsonSerializerOptions? options = null)
-    {
-        var j = joined.ToJson(options);
-        return source.RootElement.MergeImp(j);
-    }
-
-    /// <summary>
-    /// Merge source json with other json (which will override the source on conflicts)
-    /// Array will be concatenate.
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="joined">The joined element (will override on conflicts).</param>
-    /// <param name="options">Serialization options</param>
-    /// <returns></returns>
-    public static JsonElement Merge<T>(
-        this in JsonElement source,
-        T joined,
-        JsonSerializerOptions? options = null)
-    {
-        var j = joined.ToJson(options);
-        return source.MergeImp(j);
-    }
-
 
     #endregion // Merge
 
@@ -1367,7 +1203,7 @@ public static class JsonExtensions
             foreach (JsonProperty e in element.EnumerateObject())
             {
                 var curSpine = spine.Add(e.Name);
-                bool isEquals = propNames.Contains(e.Name); // || propNames.Contains(curSpine);
+                bool isEquals = propNames.Contains(e.Name);
                 JsonElement v = e.Value;
                 if (isEquals)
                 {
@@ -1473,7 +1309,7 @@ public static class JsonExtensions
     /// <returns></returns>
     /// <exception cref="System.NotSupportedException"></exception>
     public static JsonElement AddIntoArray<T>(
-                                this in JsonElement source, 
+                                this in JsonElement source,
                                 params T[] addition)
     {
         if (addition.Length == 1)
