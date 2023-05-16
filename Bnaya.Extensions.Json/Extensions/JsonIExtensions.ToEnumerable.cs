@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 
-using static System.Text.Json.TraverseFlowControl;
-using static System.Text.Json.TraverseMarkSemantic;
 using static System.Text.Json.TraverseFlow;
+using static System.Text.Json.TraverseMarkSemantic;
 
 // credit: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-converters-how-to
 
@@ -55,11 +54,11 @@ static partial class JsonExtensions
         string path,
         TraverseMarkSemantic semantic = TraverseMarkSemantic.Pick)
     {
-        Func<JsonElement, int, IImmutableList<string>, TraverseFlowControl> predicate =
-            CreatePathFilter(path, caseSensitive);
-        return source.ToEnumerable(0, ImmutableList<string>.Empty, predicate);
+        TraversePredicate predicate =
+            CreatePathPredicate(path, caseSensitive);
+        return source.ToEnumerableRec(ImmutableList<string>.Empty, predicate, semantic);
     }
-                            
+
 
     /// <summary>
     /// Filters descendant element by predicate.
@@ -78,10 +77,10 @@ static partial class JsonExtensions
     /// <returns></returns>
     public static IEnumerable<JsonElement> ToEnumerable(
                             this JsonDocument source,
-                            Func<JsonElement, int, IImmutableList<string>, TraverseFlowControl> predicate,
+                            TraversePredicate predicate,
                             TraverseMarkSemantic semantic = TraverseMarkSemantic.Pick)
     {
-        return source.RootElement.ToEnumerable(0, ImmutableList<string>.Empty, predicate);
+        return source.RootElement.ToEnumerableRec(ImmutableList<string>.Empty, predicate, semantic);
     }
 
     /// <summary>
@@ -101,10 +100,10 @@ static partial class JsonExtensions
     /// <returns></returns>
     public static IEnumerable<JsonElement> ToEnumerable(
         this in JsonElement source,
-        Func<JsonElement, int, IImmutableList<string>, TraverseFlowControl> predicate,
-                            TraverseMarkSemantic semantic = TraverseMarkSemantic.Pick)
+        TraversePredicate predicate,
+        TraverseMarkSemantic semantic = TraverseMarkSemantic.Pick)
     {
-        return source.ToEnumerable(0, ImmutableList<string>.Empty, predicate, semantic);
+        return source.ToEnumerableRec(ImmutableList<string>.Empty, predicate, semantic);
     }
 
     #endregion // Overloads
@@ -113,24 +112,18 @@ static partial class JsonExtensions
     /// Filters descendant element by predicate.
     /// </summary>
     /// <param name="source">The source.</param>
-    /// <param name="deep">The deep.</param>
     /// <param name="spine">The breadcrumbs spine.</param>
-    /// <param name="predicate">
-    /// <![CDATA[The predicate: (current, deep, breadcrumbs spine) => ...;
+    /// <param name="predicate"><![CDATA[The predicate: (current, deep, breadcrumbs spine) => ...;
     /// current: the current JsonElement.
     /// deep: start at 0.
     /// breadcrumbs spine: spine of ancestor's properties and arrays index.
-    /// TIP: using static System.Text.Json.TraverseFlowInstruction;]]>
-    /// </param>
-    /// <param name="semantic">
-    /// The Semantic of marking a node
-    /// </param>
+    /// TIP: using static System.Text.Json.TraverseFlowInstruction;]]></param>
+    /// <param name="semantic">The Semantic of marking a node</param>
     /// <returns></returns>
-    private static IEnumerable<JsonElement> ToEnumerable(
+    private static IEnumerable<JsonElement> ToEnumerableRec(
                             this JsonElement source,
-                            int deep,
                             IImmutableList<string> spine,
-                            Func<JsonElement, int, IImmutableList<string>, TraverseFlowControl> predicate,
+                            TraversePredicate predicate,
                             TraverseMarkSemantic semantic = TraverseMarkSemantic.Pick)
     {
         if (source.ValueKind == JsonValueKind.Object)
@@ -140,7 +133,7 @@ static partial class JsonExtensions
                 var spn = spine.Add(p.Name);
                 var val = p.Value;
 
-                var (flow, marked)  = predicate(val, deep, spn) ;
+                var (flow, marked) = predicate(val, spn);
                 if (marked && semantic == Pick || !marked && semantic == Ignore)
                 {
                     yield return val;
@@ -151,7 +144,7 @@ static partial class JsonExtensions
                     break;
                 if (flow == Children)
                 {
-                    foreach (var result in val.ToEnumerable(deep + 1, spn, predicate))
+                    foreach (var result in val.ToEnumerableRec(spn, predicate))
                     {
                         yield return result;
                     }
@@ -166,7 +159,7 @@ static partial class JsonExtensions
             foreach (JsonElement val in source.EnumerateArray())
             {
                 var spn = spine.Add($"[{i++}]");
-                var (flow, marked) = predicate(val, deep, spn);
+                var (flow, marked) = predicate(val, spn);
                 if (marked)
                 {
                     yield return val;
@@ -178,7 +171,7 @@ static partial class JsonExtensions
                     break;
                 if (flow == Children)
                 {
-                    foreach (var result in val.ToEnumerable(deep + 1, spn, predicate))
+                    foreach (var result in val.ToEnumerableRec(spn, predicate))
                     {
                         yield return result;
                     }

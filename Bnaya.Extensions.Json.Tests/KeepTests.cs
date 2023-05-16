@@ -1,17 +1,15 @@
 using System.Collections.Immutable;
 
-using FakeItEasy;
-
 using Xunit;
 using Xunit.Abstractions;
 
 namespace System.Text.Json.Extension.Extensions.Tests
 {
-    public class KeepTests: BaseTests
+    public class KeepTests : BaseTests
     {
         #region Ctor
 
-        public KeepTests(ITestOutputHelper outputHelper): base(outputHelper)
+        public KeepTests(ITestOutputHelper outputHelper) : base(outputHelper)
         {
         }
 
@@ -20,7 +18,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
         #region Keep_Test
 
         [Theory]
-        [InlineData("B.[1]","""
+        [InlineData("B.[1]", """
                                  {"B":[{"Val":20}]}
                                  """)]
         [InlineData("B.[1].val", """
@@ -58,7 +56,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
         #region Keep_Replace_Test
 
         [Theory]
-        [InlineData("B.[1].*","""
+        [InlineData("B.[1].*", """
                                  {"B":[{"Val":30}]}
                                  """)]
         [InlineData("B.[1].val", """
@@ -77,8 +75,8 @@ namespace System.Text.Json.Extension.Extensions.Tests
         {
             _outputHelper.WriteLine(path);
             var source = JsonDocument.Parse(JSON_INDENT);
-            
-            JsonElement? onMatch (JsonElement current, int deep, IImmutableList<string> breadcrumbs)
+
+            JsonElement? onMatch(JsonElement current, IImmutableList<string> breadcrumbs)
             {
                 if (current.ValueKind == JsonValueKind.Number)
                 {

@@ -1,8 +1,3 @@
-using System.Collections.Immutable;
-
-using FakeItEasy;
-
-using Xunit;
 using Xunit.Abstractions;
 
 namespace System.Text.Json.Extension.Extensions.Tests

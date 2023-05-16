@@ -6,7 +6,7 @@ using Xunit;
 using Xunit.Abstractions;
 
 using static System.Text.Json.TraverseFlow;
-using static System.Text.Json.TraverseFlowControl;
+using static System.Text.Json.TraverseInstruction;
 
 namespace System.Text.Json.Extension.Extensions.Tests
 {
@@ -80,19 +80,19 @@ namespace System.Text.Json.Extension.Extensions.Tests
         {
             var source = JsonDocument.Parse(JSON_INDENT);
 
-            TraverseFlowControl Predicate(JsonElement current, int deep, IImmutableList<string> breadcrumbs)
+            TraverseInstruction Predicate(JsonElement current, IImmutableList<string> breadcrumbs)
             {
                 if (breadcrumbs.Count < 4)
-                    return SkipToChildren;
+                    return ToChildren;
 
                 if (breadcrumbs[^4] == "relationship" &&
                     breadcrumbs[^3] == "projects" &&
                     breadcrumbs[^1] == "key")
                 {
-                    return new TraverseFlowControl(Stop, true);
+                    return new TraverseInstruction(Stop, true);
                 }
 
-                return SkipToChildren;
+                return ToChildren;
             }
             var items = source.ToEnumerable(Predicate);
             var results = items.Select(m => m.GetString()).ToArray();

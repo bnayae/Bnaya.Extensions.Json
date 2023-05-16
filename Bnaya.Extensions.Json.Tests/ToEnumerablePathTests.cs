@@ -1,12 +1,8 @@
 using System;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 using Xunit;
 using Xunit.Abstractions;
-
-using static System.Text.Json.TraverseFlowInstruction;
 
 namespace System.Text.Json.Extension.Extensions.Tests
 {
@@ -14,7 +10,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
     {
         #region Ctor
 
-        public ToEnumerablePathTests(ITestOutputHelper outputHelper): base(outputHelper) { }
+        public ToEnumerablePathTests(ITestOutputHelper outputHelper) : base(outputHelper) { }
 
         #endregion Ctor
 
@@ -64,7 +60,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
         public void ToEnumerable_Path_Test(string path, string expectedJoined)
         {
             var source = JsonDocument.Parse(JSON_INDENT);
-            var items = source.ToEnumerable(path);
+            var items = source.ToEnumerable(path).ToArray();
 
             var results = items.Select(m =>
                 m.ValueKind switch

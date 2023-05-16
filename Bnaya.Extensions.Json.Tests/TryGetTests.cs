@@ -3,15 +3,15 @@ using Xunit.Abstractions;
 
 namespace System.Text.Json.Extension.Extensions.Tests
 {
-    public class TryGetTests: BaseTests
+    public class TryGetTests : BaseTests
     {
         #region Ctor
 
-        public TryGetTests(ITestOutputHelper outputHelper): base(outputHelper) { }
+        public TryGetTests(ITestOutputHelper outputHelper) : base(outputHelper) { }
 
         #endregion Ctor
 
-        protected override string JSON_INDENT { get;  } =
+        protected override string JSON_INDENT { get; } =
                                     """
                                     {
                                       "B": {
@@ -58,7 +58,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
         [InlineData("B.B1", """
                                  ["Very","Cool"]
                                  """,
-                        false, "Array cannot be mapped to a string" )]
+                        false, "Array cannot be mapped to a string")]
         [InlineData("B.B1.*", """
                                  Very
                                  """)]
@@ -91,7 +91,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
 
         [Theory]
         [InlineData("B.B1", "2001-01-01T01:01:01",
-                        false, "Array cannot be mapped to a date" )]
+                        false, "Array cannot be mapped to a date")]
         [InlineData("B.*.B25", "2007-09-01T10:35:01")]
         //[InlineData("B.*.B26", "2007-09-01T10:35:01+localtime")]
         public void TryGetDateTime_Test(string path, DateTime expected, bool shouldSucceed = true, string? reason = null)
@@ -122,7 +122,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
 
         [Theory]
         [InlineData("B.B1", "2001-01-01T01:01:01",
-                        false, "Array cannot be mapped to a date" )]
+                        false, "Array cannot be mapped to a date")]
         [InlineData("B.*.B25", "2007-09-01T10:35:01")]
         [InlineData("B.*.B26", "2007-09-01T10:35:01+02")]
         public void TryGetDateTimeOffset_Test(string path, DateTimeOffset expected, bool shouldSucceed = true, string? reason = null)
@@ -181,9 +181,9 @@ namespace System.Text.Json.Extension.Extensions.Tests
         #region TryGetDouble_Test
 
         [Theory]
-        [InlineData("B.B2.B22", 22 )]
-        [InlineData("B.B2.B24", 1.8 )]
-        [InlineData("B.B2.B23", 0,  false, "not a double")]
+        [InlineData("B.B2.B22", 22)]
+        [InlineData("B.B2.B24", 1.8)]
+        [InlineData("B.B2.B23", 0, false, "not a double")]
         public void TryGetDouble_Test(string path, double expected, bool shouldSucceed = true, string? reason = null)
         {
             var source = JsonDocument.Parse(JSON_INDENT);
@@ -211,9 +211,9 @@ namespace System.Text.Json.Extension.Extensions.Tests
         #region TryGetInt_Test
 
         [Theory]
-        [InlineData("B.B2.B22", 22 )]
-        [InlineData("B.B2.B24", 0, false, "it is a double" )]
-        [InlineData("B.B2.B23", 0,  false, "not a number")]
+        [InlineData("B.B2.B22", 22)]
+        [InlineData("B.B2.B24", 0, false, "it is a double")]
+        [InlineData("B.B2.B23", 0, false, "not a number")]
         public void TryGetInt_Test(string path, int expected, bool shouldSucceed = true, string? reason = null)
         {
             var source = JsonDocument.Parse(JSON_INDENT);
@@ -241,9 +241,9 @@ namespace System.Text.Json.Extension.Extensions.Tests
         #region TryGetUInt_Test
 
         [Theory]
-        [InlineData("B.B2.B22", 22 )]
-        [InlineData("B.B2.B24", 0, false, "it is a double" )]
-        [InlineData("B.B2.B23", 0,  false, "not a number")]
+        [InlineData("B.B2.B22", 22)]
+        [InlineData("B.B2.B24", 0, false, "it is a double")]
+        [InlineData("B.B2.B23", 0, false, "not a number")]
         public void TryGetUInt_Test(string path, uint expected, bool shouldSucceed = true, string? reason = null)
         {
             var source = JsonDocument.Parse(JSON_INDENT);
@@ -271,9 +271,9 @@ namespace System.Text.Json.Extension.Extensions.Tests
         #region TryGetDecimal_Test
 
         [Theory]
-        [InlineData("B.B2.B22", 22 )]
-        [InlineData("B.B2.B24", 1.8 )]
-        [InlineData("B.B2.B23", 0,  false, "not a double")]
+        [InlineData("B.B2.B22", 22)]
+        [InlineData("B.B2.B24", 1.8)]
+        [InlineData("B.B2.B23", 0, false, "not a double")]
         public void TryGetDecimal_Test(string path, decimal expected, bool shouldSucceed = true, string? reason = null)
         {
             var source = JsonDocument.Parse(JSON_INDENT);
@@ -301,9 +301,9 @@ namespace System.Text.Json.Extension.Extensions.Tests
         #region TryGetFloat_Test
 
         [Theory]
-        [InlineData("B.B2.B22", 22 )]
-        [InlineData("B.B2.B24", 1.8 )]
-        [InlineData("B.B2.B23", 0,  false, "not a double")]
+        [InlineData("B.B2.B22", 22)]
+        [InlineData("B.B2.B24", 1.8)]
+        [InlineData("B.B2.B23", 0, false, "not a double")]
         public void TryGetFloat_Test(string path, float expected, bool shouldSucceed = true, string? reason = null)
         {
             var source = JsonDocument.Parse(JSON_INDENT);

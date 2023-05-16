@@ -1,17 +1,13 @@
-using System.Collections.Immutable;
-
-using FakeItEasy;
-
 using Xunit;
 using Xunit.Abstractions;
 
 namespace System.Text.Json.Extension.Extensions.Tests
 {
-    public class RemoveTests: BaseTests
+    public class RemoveTests : BaseTests
     {
         #region Ctor
 
-        public RemoveTests(ITestOutputHelper outputHelper): base(outputHelper) { }
+        public RemoveTests(ITestOutputHelper outputHelper) : base(outputHelper) { }
 
         #endregion Ctor
 
