@@ -34,7 +34,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
                                     {"B":[{"Val":40},{"Val":20}]}
                                     """)]
         [InlineData("B.[].val", """
-                                     {"B":[]}
+                                     {}
                                      """, true)]
         [InlineData("B.[].Factor", """
                                         {"B":[{"Factor":20}]}

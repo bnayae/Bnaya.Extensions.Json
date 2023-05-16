@@ -1,17 +1,6 @@
-﻿using System.Buffers;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
-using System.Numerics;
 
-using Bnaya.Extensions.Json.deprecated;
-
-using static System.Text.Json.Extension.Constants;
-
-
-using static System.Text.Json.TraverseInstruction;
-using static System.Text.Json.TraverseFlow;
 using static System.Text.Json.TraverseMarkSemantic;
 
 namespace System.Text.Json;
@@ -62,8 +51,8 @@ static partial class JsonExtensions
         var merged = joined.ToJson(options);
 
         TraversePredicate predicate =
-                  CreatePathPredicate(path, caseSensitive, Ignore);
-        return source.Filter(predicate, OnMerge);
+                  CreatePathPredicate(path, caseSensitive);
+        return source.Filter(Ignore, predicate, OnMerge);
 
         JsonElement? OnMerge(JsonElement target, IImmutableList<string> breadcrumbs)
         {
@@ -229,8 +218,8 @@ static partial class JsonExtensions
         IEnumerable<JsonElement> joined)
     {
         TraversePredicate predicate =
-                  CreatePathPredicate(path, caseSensitive, Ignore);
-        return source.Filter(predicate, OnMerge);
+                  CreatePathPredicate(path, caseSensitive);
+        return source.Filter(Ignore, predicate, OnMerge);
 
         JsonElement? OnMerge(JsonElement target, IImmutableList<string> breadcrumb)
         {

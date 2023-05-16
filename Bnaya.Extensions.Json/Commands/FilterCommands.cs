@@ -1,20 +1,9 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Disposables;
-using System.Linq;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Threading;
-
-using Bnaya.Extensions.Common.Disposables;
-using Bnaya.Extensions.Json.deprecated;
-
-using static System.Text.Json.TraverseFlow;
-using static System.Text.Json.TraverseMarkSemantic;
 #pragma warning disable S3881 // "IDisposable" should be implemented correctly
 
 namespace Bnaya.Extensions.Json.Commands;
@@ -92,11 +81,6 @@ internal static class FilterCommands
     /// <summary>
     /// Write command which will execute on final matching.
     /// </summary>
-    /// <param name="writer"
-    /// <param name="element"></param>
-    /// <param name="breadcrumbs"></param>
-    /// <param name="onMatch"></param>
-    /// <param name="propName"></param>
     /// <remarks>
     /// On complex match' like a pattern or path matching, 
     /// matching a parent element may be depend 
@@ -104,6 +88,15 @@ internal static class FilterCommands
     /// </remarks>
     public record NonWriteCommand() : IWriteCommand
     {
+        #region Deep
+
+        /// <summary>
+        /// Gets the deep.
+        /// </summary>
+        public int Deep { get; } = -1;
+
+        #endregion // Deep
+
         #region IEnumerator Members
 
         public IEnumerator<IWriteCommand> GetEnumerator()
@@ -120,7 +113,7 @@ internal static class FilterCommands
         /// <summary>
         /// Write the element
         /// </summary>
-        void IWriteCommand.Write()
+        void IWriteCommand.Run()
         {
         }
 
@@ -145,32 +138,77 @@ internal static class FilterCommands
     /// <summary>
     /// Write command which will execute on final matching.
     /// </summary>
-    /// <param name="writer"
-    /// <param name="element"></param>
-    /// <param name="breadcrumbs"></param>
-    /// <param name="onMatch"></param>
-    /// <param name="propName"></param>
     /// <remarks>
     /// On complex match' like a pattern or path matching, 
     /// matching a parent element may be depend 
     /// on whether one of it's children has matched.
     /// </remarks>
-    [DebuggerDisplay("{breadcrumbs}")]
-    public abstract record WriteCommandAbstract(
-        Utf8JsonWriter writer,
-        IImmutableList<string> breadcrumbs,
-        IWriteCommand? parent) : IWriteCommand
+    [DebuggerDisplay("{Breadcrumbs}")]
+    public abstract record WriteCommandAbstract : IWriteCommand
     {
         public bool executed;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FilterCommands" /> class.
+        /// </summary>
+        /// <param name="writer">The writer.</param>
+        /// <param name="breadcrumbs">The breadcrumbs.</param>
+        /// <param name="parent">The parent.</param>
+        protected WriteCommandAbstract(
+                                    Utf8JsonWriter writer,
+                                    IImmutableList<string> breadcrumbs,
+                                    IWriteCommand? parent)
+        {
+            Writer = writer;
+            Breadcrumbs = breadcrumbs;
+            Parent = parent;
+            Deep = (parent?.Deep  ?? 0) + 1;
+        }
+
+        #region Writer
+
+        /// <summary>
+        /// Gets the writer.
+        /// </summary>
+        public Utf8JsonWriter Writer { get; }
+
+        #endregion // Writer
+
+        #region Breadcrumbs
+
+        /// <summary>
+        /// Gets the breadcrumbs.
+        /// </summary>
+        public IImmutableList<string> Breadcrumbs { get; }
+
+        #endregion // Breadcrumbs
+
+        #region Parent
+
+        /// <summary>
+        /// Gets the parent.
+        /// </summary>
+        public IWriteCommand? Parent { get; }
+
+        #endregion // Parent
+
+        #region Deep
+
+        /// <summary>
+        /// Gets the command's dept.
+        /// </summary>
+        public int Deep { get; private set; }
+
+        #endregion // Deep
 
         #region IEnumerator Members
 
         public IEnumerator<IWriteCommand> GetEnumerator()
         {
             yield return this;
-            if (parent == null)
+            if (Parent == null)
                 yield break;
-            foreach (var item in parent)
+            foreach (var item in Parent)
             {
                 yield return item;
             }
@@ -185,13 +223,13 @@ internal static class FilterCommands
         /// <summary>
         /// Write the element
         /// </summary>
-        void IWriteCommand.Write()
+        void IWriteCommand.Run()
         {
             if (executed)
                 return;
             executed = true;
 
-            parent?.Write();
+            Parent?.Run();
             OnWrite();
         }
 
@@ -242,27 +280,28 @@ internal static class FilterCommands
     /// <summary>
     /// Write command which will execute on final matching.
     /// </summary>
-    /// <param name="writer"
-    /// <param name="breadcrumbs"></param>
+    /// <param name="Writer"></param>
+    /// <param name="Breadcrumbs"></param>
     /// <remarks>
     /// On complex match' like a pattern or path matching, 
     /// matching a parent element may be depend 
     /// on whether one of it's children has matched.
     /// </remarks>
+    /// <param name="Parent"></param>
     public record WriteArrayCommand(
-                        Utf8JsonWriter writer,
-                        IImmutableList<string> breadcrumbs,
-                        IWriteCommand? parent) : WriteCommandAbstract(writer, breadcrumbs, parent)
+                        Utf8JsonWriter Writer,
+                        IImmutableList<string> Breadcrumbs,
+                        IWriteCommand? Parent) : WriteCommandAbstract(Writer, Breadcrumbs, Parent)
     {
         /// <summary>
         /// Write the element
         /// </summary>
-        protected override void OnWrite() => writer.WriteStartArray();
+        protected override void OnWrite() => Writer.WriteStartArray();
 
         /// <summary>
         /// Raises the Close event.
         /// </summary>
-        protected override void OnClose() => writer.WriteEndArray();
+        protected override void OnClose() => Writer.WriteEndArray();
     }
 
     #endregion // WriteArrayCommand
@@ -272,13 +311,14 @@ internal static class FilterCommands
     /// <summary>
     /// Write command which will execute on final matching.
     /// </summary>
-    /// <param name="writer"
+    /// <param name="writer"></param>
     /// <param name="breadcrumbs"></param>
     /// <remarks>
     /// On complex match' like a pattern or path matching, 
     /// matching a parent element may be depend 
     /// on whether one of it's children has matched.
     /// </remarks>
+    /// <param name="parent"></param>
     public record WriteObjectCommand(
                         Utf8JsonWriter writer,
                         IImmutableList<string> breadcrumbs,
@@ -302,16 +342,15 @@ internal static class FilterCommands
     /// <summary>
     /// Write command which will execute on final matching.
     /// </summary>
-    /// <param name="writer"
-    /// <param name="element"></param>
+    /// <param name="writer"></param>
     /// <param name="breadcrumbs"></param>
-    /// <param name="onMatch"></param>
     /// <param name="propName"></param>
     /// <remarks>
     /// On complex match' like a pattern or path matching, 
     /// matching a parent element may be depend 
     /// on whether one of it's children has matched.
     /// </remarks>
+    /// <param name="parent"></param>
     [DebuggerDisplay("{propName}, {breadcrumbs}")]
     public record WritePropertyCommand(
                         string propName,
@@ -332,16 +371,16 @@ internal static class FilterCommands
     /// <summary>
     /// Write command which will execute on final matching.
     /// </summary>
-    /// <param name="writer"
+    /// <param name="writer"></param>
     /// <param name="element"></param>
     /// <param name="breadcrumbs"></param>
     /// <param name="onMatch"></param>
-    /// <param name="propName"></param>
     /// <remarks>
     /// On complex match' like a pattern or path matching, 
     /// matching a parent element may be depend 
     /// on whether one of it's children has matched.
     /// </remarks>
+    /// <param name="parent"></param>
     [DebuggerDisplay("{element}, {breadcrumbs}")]
     public record WriteElementCommand(
                         JsonElement element,

@@ -8,7 +8,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
 
         #region Ctor
 
-        public BaseTests(ITestOutputHelper outputHelper)
+        protected BaseTests(ITestOutputHelper outputHelper)
         {
             _outputHelper = outputHelper;
         }
