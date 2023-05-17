@@ -23,12 +23,12 @@ namespace System.Text.Json.Extension.Extensions.Tests
                 {
                     var val = e.GetInt32();
                     if (val > 30)
-                        return TraverseInstruction.Mark;
+                        return TraverseInstruction.TakeOrReplace;
                     return TraverseInstruction.SkipToSibling;
                 }
                 if (e.ValueKind == JsonValueKind.Array || e.ValueKind == JsonValueKind.Object)
                     return TraverseInstruction.ToChildren;
-                return TraverseInstruction.Mark;
+                return TraverseInstruction.TakeOrReplace;
             });
 
             Write(source, target);

@@ -12,5 +12,10 @@ public enum TraverseMarkSemantic
     /// <summary>
     /// The ignore branches under a marked element unless it part of other unmarked branches 
     /// </summary>
-    Ignore
+    Ignore,
+    /// <summary>
+    /// Predicate's matches are taken with option to be replaced by the on-match delegate.
+    /// Other elements are taken without option to be replaced.
+    /// </summary>
+    Replace
 }

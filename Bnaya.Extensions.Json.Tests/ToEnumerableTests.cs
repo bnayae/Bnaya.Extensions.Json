@@ -89,7 +89,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
                     breadcrumbs[^3] == "projects" &&
                     breadcrumbs[^1] == "key")
                 {
-                    return new TraverseInstruction(Stop, true);
+                    return new TraverseInstruction(Stop, TraverseAction.TakeOrReplace);
                 }
 
                 return ToChildren;

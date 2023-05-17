@@ -12,7 +12,7 @@
 /// </param>
 public record struct TraverseInstruction(
     TraverseFlow Next = TraverseFlow.Children,
-    bool Marked = false)
+    TraverseAction Marked = TraverseAction.None)
 {
     /// <summary>
     /// Traversing to its children.
@@ -26,7 +26,11 @@ public record struct TraverseInstruction(
     /// <summary>
     /// Mark the current node and continue traversing to its sibling (skip sibling)
     /// </summary>
-    public static readonly TraverseInstruction Mark = new TraverseInstruction(TraverseFlow.Sibling, true);
+    public static readonly TraverseInstruction TakeOrReplace = new TraverseInstruction(TraverseFlow.Sibling, TraverseAction.TakeOrReplace);
+    /// <summary>
+    /// Mark the current node and continue traversing to its sibling (skip sibling)
+    /// </summary>
+    public static readonly TraverseInstruction Take = new TraverseInstruction(TraverseFlow.Sibling, TraverseAction.Take);
     /// <summary>
     /// Ignore the current node and continue traversing to its parent (without marking the current node)
     /// </summary>

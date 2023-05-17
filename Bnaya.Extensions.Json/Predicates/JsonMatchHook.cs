@@ -10,7 +10,11 @@ namespace System.Text.Json;
 /// </summary>
 /// <param name="element">The element.</param>
 /// <param name="breadcrumbs">The breadcrumbs.</param>
-/// <returns>The replacement if any or null to ignore it</returns>
+/// <returns>
+/// Replacement element.
+/// When null it will remove the element.
+/// To keep the current element, return the element from the input.
+/// </returns>
 public delegate JsonElement? JsonMatchHook(
                             JsonElement element,
                             IImmutableList<string> breadcrumbs);

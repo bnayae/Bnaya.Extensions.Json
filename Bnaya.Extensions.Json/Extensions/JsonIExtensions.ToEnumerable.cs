@@ -51,12 +51,11 @@ static partial class JsonExtensions
     public static IEnumerable<JsonElement> ToEnumerable(
         this in JsonElement source,
         bool caseSensitive,
-        string path,
-        TraverseMarkSemantic semantic = TraverseMarkSemantic.Pick)
+        string path)
     {
         TraversePredicate predicate =
             CreatePathPredicate(path, caseSensitive);
-        return source.ToEnumerableRec(ImmutableList<string>.Empty, predicate, semantic);
+        return source.ToEnumerableRec(ImmutableList<string>.Empty, predicate);
     }
 
 
@@ -77,10 +76,9 @@ static partial class JsonExtensions
     /// <returns></returns>
     public static IEnumerable<JsonElement> ToEnumerable(
                             this JsonDocument source,
-                            TraversePredicate predicate,
-                            TraverseMarkSemantic semantic = TraverseMarkSemantic.Pick)
+                            TraversePredicate predicate)
     {
-        return source.RootElement.ToEnumerableRec(ImmutableList<string>.Empty, predicate, semantic);
+        return source.RootElement.ToEnumerableRec(ImmutableList<string>.Empty, predicate);
     }
 
     /// <summary>
@@ -100,10 +98,9 @@ static partial class JsonExtensions
     /// <returns></returns>
     public static IEnumerable<JsonElement> ToEnumerable(
         this in JsonElement source,
-        TraversePredicate predicate,
-        TraverseMarkSemantic semantic = TraverseMarkSemantic.Pick)
+        TraversePredicate predicate)
     {
-        return source.ToEnumerableRec(ImmutableList<string>.Empty, predicate, semantic);
+        return source.ToEnumerableRec(ImmutableList<string>.Empty, predicate);
     }
 
     #endregion // Overloads
@@ -123,8 +120,7 @@ static partial class JsonExtensions
     private static IEnumerable<JsonElement> ToEnumerableRec(
                             this JsonElement source,
                             IImmutableList<string> spine,
-                            TraversePredicate predicate,
-                            TraverseMarkSemantic semantic = TraverseMarkSemantic.Pick)
+                            TraversePredicate predicate)
     {
         if (source.ValueKind == JsonValueKind.Object)
         {
@@ -134,7 +130,8 @@ static partial class JsonExtensions
                 var val = p.Value;
 
                 var (flow, marked) = predicate(val, spn);
-                if (marked && semantic == Pick || !marked && semantic == Ignore)
+
+                if (marked != TraverseAction.None)
                 {
                     yield return val;
                 }
@@ -160,7 +157,7 @@ static partial class JsonExtensions
             {
                 var spn = spine.Add($"[{i++}]");
                 var (flow, marked) = predicate(val, spn);
-                if (marked)
+                if (marked != TraverseAction.None)
                 {
                     yield return val;
                 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.ComponentModel;
 
 // credit: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-converters-how-to
 
@@ -18,10 +19,12 @@ static partial class JsonExtensions
     /// </summary>
     /// <param name="path">The path.</param>
     /// <param name="caseSensitive">if set to <c>true</c> [case sensitive].</param>
+    /// <param name="semantic">The semantic.</param>
     /// <returns></returns>
     private static TraversePredicate CreatePathPredicate(
                                 string path,
-                                bool caseSensitive = false)
+                                bool caseSensitive = false,
+                                TraverseMarkSemantic semantic = TraverseMarkSemantic.Pick)
     {
         var filter = path.Split('.');
 
@@ -35,11 +38,22 @@ static partial class JsonExtensions
             if (objTerm || arrTerm)
             {
                 if (deep == filter.Length - 1)
-                    return Mark;
+                {
+                    if (semantic == TraverseMarkSemantic.Replace)
+                        return TakeOrReplace;
+                    if (semantic == TraverseMarkSemantic.Pick)
+                        return Take;
+                    else
+                        return SkipToSibling;
+                }
                 return ToChildren;
             }
 
-            return SkipToSibling;
+            if (semantic == TraverseMarkSemantic.Pick)
+                return SkipToSibling;
+            if (semantic == TraverseMarkSemantic.Replace)
+                return Take;
+            return TakeOrReplace;
         }
         return Predicate;
     }

@@ -20,93 +20,6 @@ public static partial class JsonExtensions
 {
     private static JsonWriterOptions INDENTED_JSON_OPTIONS = new JsonWriterOptions { Indented = true };
 
-    #region Keep
-
-    /// <summary>
-    /// Rewrite json while excluding elements which doesn't match the path
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="path">The path.</param>
-    /// <param name="caseSensitive">if set to <c>true</c> [case sensitive].</param>
-    /// <param name="onMatch"><![CDATA[
-    /// Notify when find a match.
-    /// According to the return value it will replace or remove the element.
-    /// Replaced when returning alternative `JsonElement` otherwise Removed.
-    /// 
-    /// Action's signature : (current, deep, breadcrumbs) => ...;]]></param>
-    /// <returns></returns>
-    public static JsonElement Keep(
-        this JsonDocument source,
-        string path,
-        bool caseSensitive = false,
-        JsonMatchHook? onMatch = null)
-    {
-        return source.RootElement.Keep(path, caseSensitive, onMatch);
-    }
-
-
-    /// <summary>
-    /// Rewrite json while excluding elements which doesn't match the path
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="path">The path.</param>
-    /// <param name="caseSensitive">indicate whether path should be a case sensitive</param>
-    /// <param name="onMatch"><![CDATA[
-    /// Notify when find a match.
-    /// According to the return value it will replace or remove the element.
-    /// Replaced when returning alternative `JsonElement` otherwise Removed.
-    /// 
-    /// Action's signature : (current, deep, breadcrumbs) => ...;]]></param>
-    /// <returns></returns>
-    public static JsonElement Keep(
-        this in JsonElement source,
-        string path,
-        bool caseSensitive = false,
-        JsonMatchHook? onMatch = null)
-    {
-        TraversePredicate predicate =
-            CreatePathPredicate(path, caseSensitive);
-        return source.Filter(predicate, onMatch);
-    }
-
-    #endregion // Keep
-
-    #region Remove
-
-    /// <summary>
-    /// Rewrite json while excluding elements according to a path
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="path">The path.</param>
-    /// <param name="caseSensitive">indicate whether path should be a case sensitive</param>
-    /// <returns></returns>
-    public static JsonElement Remove(
-        this JsonDocument source,
-        string path,
-        bool caseSensitive = false)
-    {
-        return source.RootElement.Remove(path, caseSensitive);
-    }
-
-    /// <summary>
-    /// Rewrite json while excluding elements according to a path
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="path">The path.</param>
-    /// <param name="caseSensitive">indicate whether path should be a case sensitive</param>
-    /// <returns></returns>
-    public static JsonElement Remove(
-        this in JsonElement source,
-        string path,
-        bool caseSensitive = false)
-    {
-        TraversePredicate predicate =
-            CreatePathPredicate(path, caseSensitive);
-        return source.Filter(Ignore, predicate);
-    }
-
-    #endregion // Remove
-
     #region AsString
 
     /// <summary>
@@ -853,17 +766,9 @@ public static partial class JsonExtensions
             return source.TryAddProperty(name, value, options);
         }
         bool caseSensitive = !(options?.Options?.PropertyNameCaseInsensitive ?? true);
-        TraversePredicate predicate =
-                    CreatePathPredicate(path, caseSensitive);
 
-        var bufferWriter = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(bufferWriter))
-        {
-            source.Filter(writer, predicate, OnTryAdd);
-        }
-        var reader = new Utf8JsonReader(bufferWriter.WrittenSpan);
-        var result = JsonDocument.ParseValue(ref reader);
-        return result.RootElement;
+        var result = source.Replace(path, OnTryAdd, caseSensitive);
+        return result;
 
         JsonElement? OnTryAdd(JsonElement target, IImmutableList<string> breadcrumbs)
         {

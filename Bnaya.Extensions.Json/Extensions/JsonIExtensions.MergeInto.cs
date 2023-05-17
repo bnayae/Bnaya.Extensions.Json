@@ -50,9 +50,7 @@ static partial class JsonExtensions
     {
         var merged = joined.ToJson(options);
 
-        TraversePredicate predicate =
-                  CreatePathPredicate(path, caseSensitive);
-        return source.Filter(Ignore, predicate, OnMerge);
+        return source.Replace(path, OnMerge);
 
         JsonElement? OnMerge(JsonElement target, IImmutableList<string> breadcrumbs)
         {
@@ -217,9 +215,7 @@ static partial class JsonExtensions
         bool caseSensitive,
         IEnumerable<JsonElement> joined)
     {
-        TraversePredicate predicate =
-                  CreatePathPredicate(path, caseSensitive);
-        return source.Filter(Ignore, predicate, OnMerge);
+        return source.Replace(path, OnMerge);
 
         JsonElement? OnMerge(JsonElement target, IImmutableList<string> breadcrumb)
         {
