@@ -4,6 +4,8 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Bnaya.Extensions.Json.svg)](https://www.nuget.org/packages/Bnaya.Extensions.Json/) 
 
+[![codecov](https://codecov.io/gh/bnayae/Bnaya.Extensions.Json/branch/main/graph/badge.svg?token=TPKF0JUWNT)](https://codecov.io/gh/bnayae/Bnaya.Extensions.Json)
+
 Functionality of this library includes:
 
 - [ToEnumerable](#ToEnumerable)
