@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 
-using static System.Text.Json.TraverseMarkSemantic;
-
 namespace System.Text.Json;
 
 static partial class JsonExtensions

@@ -5,7 +5,6 @@ using Bnaya.Extensions.Common.Disposables;
 using Bnaya.Extensions.Json.Commands;
 
 using static System.Text.Json.TraverseFlow;
-using static System.Text.Json.TraverseMarkSemantic;
 using static Bnaya.Extensions.Json.Commands.FilterCommands;
 
 namespace System.Text.Json;
@@ -86,7 +85,6 @@ static partial class JsonExtensions
     /// <param name="writer">The writer.</param>
     /// <param name="predicate">The predicate.</param>
     /// <param name="onMatch">Optional replacement hook.</param>
-    /// <param name="semantic">The semantic.</param>
     /// <returns></returns>
     private static void Filter(
         this in JsonElement element,
@@ -110,6 +108,7 @@ static partial class JsonExtensions
     /// <param name="onMatch">The on replace.</param>
     /// <param name="writeCommand">The write command (execute on full match [mark]).</param>
     /// <returns></returns>
+#pragma warning disable S3241 // Methods should not return values that are never used
     private static RecResults FilterRec(
         this in JsonElement element,
         Utf8JsonWriter writer,
@@ -124,7 +123,7 @@ static partial class JsonExtensions
         {
             using (var cmd1 = CreateObjectWriter(writer, breadcrumbs.State, cmd))
             {
-                if(cmd1.Deep == 0)
+                if (cmd1.Deep == 0)
                     cmd1.Run(); // root element
 
                 var elements = element.EnumerateObject();
@@ -139,7 +138,7 @@ static partial class JsonExtensions
 
                         if (mark == TraverseAction.TakeOrReplace || mark == TraverseAction.Take)
                         {
-                            var matchHook = mark == TraverseAction.TakeOrReplace ? onMatch : null; 
+                            var matchHook = mark == TraverseAction.TakeOrReplace ? onMatch : null;
                             using (var cmd3 = CreateElementWriter(val, matchHook, writer, breadcrumbs.State, cmd2))
                             {
                                 cmd3.Run();
@@ -214,4 +213,5 @@ static partial class JsonExtensions
         }
         return RecResults.None;
     }
+#pragma warning restore S3241 // Methods should not return values that are never used
 }

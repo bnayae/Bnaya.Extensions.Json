@@ -2,7 +2,6 @@
 using System.Collections.Immutable;
 
 using static System.Text.Json.TraverseFlow;
-using static System.Text.Json.TraverseMarkSemantic;
 
 // credit: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-converters-how-to
 
@@ -44,9 +43,6 @@ static partial class JsonExtensions
     /// <param name="source">The source.</param>
     /// <param name="caseSensitive">indicate whether path should be a case sensitive</param>
     /// <param name="path">The path.</param>
-    /// <param name="semantic">
-    /// The Semantic of marking a node
-    /// </param>
     /// <returns></returns>
     public static IEnumerable<JsonElement> ToEnumerable(
         this in JsonElement source,
@@ -70,9 +66,6 @@ static partial class JsonExtensions
     /// breadcrumbs spine: spine of ancestor's properties and arrays index.
     /// TIP: using static System.Text.Json.TraverseFlowInstruction;]]>
     /// </param>
-    /// <param name="semantic">
-    /// The Semantic of marking a node
-    /// </param>
     /// <returns></returns>
     public static IEnumerable<JsonElement> ToEnumerable(
                             this JsonDocument source,
@@ -91,9 +84,6 @@ static partial class JsonExtensions
     /// deep: start at 0.
     /// breadcrumbs spine: spine of ancestor's properties and arrays index.
     /// TIP: using static System.Text.Json.TraverseFlowInstruction;]]>
-    /// </param>
-    /// <param name="semantic">
-    /// The Semantic of marking a node
     /// </param>
     /// <returns></returns>
     public static IEnumerable<JsonElement> ToEnumerable(
@@ -115,7 +105,6 @@ static partial class JsonExtensions
     /// deep: start at 0.
     /// breadcrumbs spine: spine of ancestor's properties and arrays index.
     /// TIP: using static System.Text.Json.TraverseFlowInstruction;]]></param>
-    /// <param name="semantic">The Semantic of marking a node</param>
     /// <returns></returns>
     private static IEnumerable<JsonElement> ToEnumerableRec(
                             this JsonElement source,

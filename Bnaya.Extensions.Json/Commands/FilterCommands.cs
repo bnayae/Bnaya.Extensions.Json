@@ -402,7 +402,7 @@ internal static class FilterCommands
             else
             {
                 var replacement = OnMatch.Invoke(Element, Breadcrumbs);
-                if (replacement != null) 
+                if (replacement != null)
                 {
                     Parent?.Run(); // only if replaced
                     replacement?.WriteTo(Writer);

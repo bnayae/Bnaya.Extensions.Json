@@ -440,6 +440,9 @@ namespace System.Text.Json.Extension.Extensions.Tests
                 Assert.False(succeed);
                 return;
             }
+
+            _outputHelper.WriteLine(reason);
+
             Assert.True(succeed);
             Assert.Equal(expected, actual);
         }

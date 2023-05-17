@@ -31,11 +31,11 @@ namespace System.Text.Json.Extension.Extensions.Tests
                                         """)]
         [InlineData("B.[1].val", """
                                         {"A":10,"B":[{"Val":40},{"Val":20},{"Factor":20}],"C":[0,25,50,100],"Note":"Re-shape json"}
-                                        """, 
+                                        """,
                                         true)]
         [InlineData("*", """
                                         {}
-                                        """, 
+                                        """,
                                         true)]
 
         public void RemovePath_Test(string path, string expected, bool caseSensitive = false)

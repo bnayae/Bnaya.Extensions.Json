@@ -23,7 +23,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
             TraverseInstruction Strategy(
                             JsonElement e,
                             IImmutableList<string> breadcrumbs)
-            { 
+            {
                 if (e.ValueKind == JsonValueKind.Number)
                 {
                     var val = e.GetInt32();

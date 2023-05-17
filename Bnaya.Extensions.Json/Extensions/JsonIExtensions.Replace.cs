@@ -1,14 +1,4 @@
-﻿using System.Buffers;
-using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
-using System.Numerics;
-
-using static System.Text.Json.Extension.Constants;
-
-using static System.Text.Json.TraverseMarkSemantic;
-
-namespace System.Text.Json;
+﻿namespace System.Text.Json;
 
 static partial class JsonExtensions
 {
