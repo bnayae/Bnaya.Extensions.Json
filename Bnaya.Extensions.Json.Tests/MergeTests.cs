@@ -49,9 +49,6 @@ namespace System.Text.Json.Extension.Extensions.Tests
 
         [Theory]
         [InlineData("{'A':1, 'B':2}", "{'A':1}", "{'B':2}")]
-        [InlineData("{'A':1, 'B':2, 'C':3}", "{'A':1}", "{'B':2}", "{'C':3}")]
-        [InlineData("{'A':2, 'B':3, 'C':3}", "{'A':1}", "{'A':2, 'B':2}", "{'B':3, 'C':3}")]
-        [InlineData("{'A':2, 'B':3, 'C':[1,2,3]}", "{'A':1}", "{'A':2, 'B':[2,4,6],'C':'Z'}", "{'B':3, 'C':[1,2,3]}")]
         [InlineData("[1,2,3,4,5,6]", "[1,2,3]", "[4,5,6]")]
         [InlineData("[1,2,3,3,4,5,6]", "[1,2,3]", "[3,4,5,6]")]
         [InlineData("[1,2,3,'3','4','5','6']", "[1,2,3]", "['3','4','5','6']")]
@@ -60,7 +57,27 @@ namespace System.Text.Json.Extension.Extensions.Tests
         [InlineData("{'A':2}", "{'A':{'A1':1}}", "{'A':2}")]
         [InlineData("{'A':{'A1':1,'A2':2}}", "{'A':{'A1':1}}", "{'A':{'A2':2}}")]
         [InlineData("{\"name\":\"env level\",\"role\":\"me too\"}", "{\"name\":\"env level\",\"role\":\"1234\"}", "{\"role\":\"me too\"}")]
-        public void Merge_Theory_Test(string expected, string source, params string[] joined)
+        public void Merge_Theory_Test(string expected, string source, string joined)
+        {
+            var sourceElement = JsonDocument.Parse(source.Replace('\'', '"')).RootElement;
+            JsonDocument joinedElement = JsonDocument.Parse(joined.Replace('\'', '"'));
+            var expectedResult = JsonDocument.Parse(expected.Replace('\'', '"')).RootElement;
+            var merged = sourceElement.Merge(joinedElement);
+
+            Write(expectedResult, merged, sourceElement, new[] { joinedElement.RootElement });
+
+            Assert.Equal(expectedResult.AsString(), merged.AsString());
+        }
+
+        #endregion // Merge_Theory_Test
+
+        #region Merge_Theory_Test
+
+        [Theory]
+        [InlineData("{'A':1, 'B':2, 'C':3}", "{'A':1}", "{'B':2}", "{'C':3}")]
+        [InlineData("{'A':2, 'B':3, 'C':3}", "{'A':1}", "{'A':2, 'B':2}", "{'B':3, 'C':3}")]
+        [InlineData("{'A':2, 'B':3, 'C':[1,2,3]}", "{'A':1}", "{'A':2, 'B':[2,4,6],'C':'Z'}", "{'B':3, 'C':[1,2,3]}")]
+        public void Merge_Theory_Multi_Test(string expected, string source, params string[] joined)
         {
             var sourceElement = JsonDocument.Parse(source.Replace('\'', '"')).RootElement;
             var joinedElement = joined.Select(b => JsonDocument.Parse(b.Replace('\'', '"')).RootElement);
@@ -164,14 +181,16 @@ namespace System.Text.Json.Extension.Extensions.Tests
         [InlineData("B.B1.[]", "{'A':1, 'B':{'B1':[{'X':'Y'},{'X':'Y'},{'X':'Y'}]}}", "{'A':1,'B':{'B1':[1,2,3]}}", "{'X':'Y'}")]
         public void MergeInto_Theory_Test(string path, string expected, string source, params string[] joined)
         {
-            var sourceElement = JsonDocument.Parse(source.Replace('\'', '"')).RootElement;
+            var sourceElement = JsonDocument.Parse(source.Replace('\'', '"'));
             var joinedElement = joined.Select(b => JsonDocument.Parse(b.Replace('\'', '"')).RootElement);
             var expectedResult = JsonDocument.Parse(expected.Replace('\'', '"')).RootElement;
             var merged = sourceElement.MergeInto(path, joinedElement);
+            var mergedEnumerable = sourceElement.MergeInto(path, joinedElement.AsEnumerable());
 
-            Write(expectedResult, merged, sourceElement, joinedElement);
+            Write(expectedResult, merged, sourceElement.RootElement, joinedElement);
 
             Assert.Equal(expectedResult.AsString(), merged.AsString());
+            Assert.Equal(expectedResult.AsString(), mergedEnumerable.AsString());
         }
 
         #endregion // MergeInto_Theory_Test
@@ -255,12 +274,12 @@ namespace System.Text.Json.Extension.Extensions.Tests
         public void Merge_Into_MultiObject_Test()
         {
 
-            var source = JsonDocument.Parse(JSON2_INDENT).RootElement;
+            var source = JsonDocument.Parse(JSON2_INDENT);
             var element1 = JsonDocument.Parse(JSON1_INDENT).RootElement;
             var element2 = JsonDocument.Parse(JSON3_INDENT).RootElement;
             var merged = source.MergeInto("B.B2", element1, element2);
 
-            Write(merged, Empty, source, new[] { element1, element2 });
+            Write(merged, Empty, source.RootElement, new[] { element1, element2 });
 
             Assert.Equal(JsonValueKind.Object, merged.ValueKind);
             Assert.False(merged.TryGetProperty("A", out _));
@@ -277,5 +296,34 @@ namespace System.Text.Json.Extension.Extensions.Tests
         }
 
         #endregion // Merge_Into_MultiObject_Test
+
+        #region Merge_Into_MultiObject_CaseSenitive_Test
+
+        [Fact]
+        public void Merge_Into_MultiObject_CaseSenitive_Test()
+        {
+
+            var source = JsonDocument.Parse(JSON2_INDENT);
+            var element1 = JsonDocument.Parse(JSON1_INDENT).RootElement;
+            var element2 = JsonDocument.Parse(JSON3_INDENT).RootElement;
+            var merged = source.MergeInto("B.B2", true, element1, element2);
+
+            Write(merged, Empty, source.RootElement, new[] { element1, element2 });
+
+            Assert.Equal(JsonValueKind.Object, merged.ValueKind);
+            Assert.False(merged.TryGetProperty("A", out _));
+            Assert.True(merged.TryGetProperty("B", out var b));
+            Assert.True(b.TryGetProperty("B1", out _));
+            Assert.True(b.TryGetProperty("B2", out var b2));
+            Assert.True(b2.TryGetProperty("B21", out _));
+            Assert.True(b2.TryGetProperty("B22", out _));
+            Assert.True(b2.TryGetProperty("A", out _));
+            Assert.True(b2.TryGetProperty("C", out var c));
+            Assert.Equal(1, c[0].GetInt16());
+            Assert.Equal(2, c[1].GetInt16());
+            Assert.Equal(3, c[2].GetInt16());
+        }
+
+        #endregion // Merge_Into_MultiObject_CaseSenitive_Test
     }
 }

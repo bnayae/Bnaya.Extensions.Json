@@ -8,7 +8,7 @@ namespace Bnaya.Extensions.Json.Commands;
 /// The action (write) will be execute at most once.
 /// The disposable won't be execute unless the action invoked.
 /// </summary>
-public interface IWriteCommand : IEnumerable<IWriteCommand>, IDisposable
+public interface IWriteCommand : IDisposable
 {
     /// <summary>
     /// Writes the specified semantic.

@@ -21,7 +21,7 @@ internal static class FilterCommands
     #region Create... [factories]
 
     /// <summary>
-    /// Creates an arry writer.
+    /// Creates an array writer.
     /// </summary>
     /// <param name="writer">The writer.</param>
     /// <param name="breadcrumbs">The breadcrumbs.</param>
@@ -96,17 +96,6 @@ internal static class FilterCommands
         public int Deep { get; } = -1;
 
         #endregion // Deep
-
-        #region IEnumerator Members
-
-        public IEnumerator<IWriteCommand> GetEnumerator()
-        {
-            yield break;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        #endregion // IEnumerator Members
 
         #region Run
 
@@ -200,23 +189,6 @@ internal static class FilterCommands
         public int Deep { get; private set; }
 
         #endregion // Deep
-
-        #region IEnumerator Members
-
-        public IEnumerator<IWriteCommand> GetEnumerator()
-        {
-            yield return this;
-            if (Parent == null)
-                yield break;
-            foreach (var item in Parent)
-            {
-                yield return item;
-            }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        #endregion // IEnumerator Members
 
         #region Run
 

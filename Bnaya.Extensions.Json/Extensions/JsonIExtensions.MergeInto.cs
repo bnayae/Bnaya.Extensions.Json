@@ -15,27 +15,6 @@ static partial class JsonExtensions
     /// <param name="path">The target path for merging.</param>
     /// <param name="joined"></param>
     /// <param name="caseSensitive"></param>
-    /// <remarks>Conflicts may happens when trying to merge object into array or other versa.</remarks>
-    /// <returns></returns>
-    public static JsonElement MergeInto<T>(
-        this JsonDocument source,
-        string path,
-        T joined,
-        bool caseSensitive = false)
-    {
-        return source.RootElement.MergeInto(path, joined, caseSensitive);
-    }
-
-    /// <summary>
-    /// Merge source json with other json at specific location within the source
-    /// Note: 
-    /// - On conflicts, will override the source
-    /// - Array will be concatenate.
-    /// </summary>
-    /// <param name="source">The source.</param>
-    /// <param name="path">The target path for merging.</param>
-    /// <param name="joined"></param>
-    /// <param name="caseSensitive"></param>
     /// <param name="options">Serialization options</param>
     /// <remarks>Conflicts may happens when trying to merge object into array or other versa.</remarks>
     /// <returns></returns>
@@ -72,7 +51,7 @@ static partial class JsonExtensions
         string path,
         params JsonElement[] joined)
     {
-        return source.MergeInto(path, false, (IEnumerable<JsonElement>)joined);
+        return source.RootElement.MergeInto(path, joined);
     }
 
     /// <summary>
@@ -110,7 +89,7 @@ static partial class JsonExtensions
         string path,
         IEnumerable<JsonElement> joined)
     {
-        return source.MergeInto(path, false, joined);
+        return source.RootElement.MergeInto(path, joined);
     }
 
     /// <summary>
@@ -150,7 +129,7 @@ static partial class JsonExtensions
         bool caseSensitive,
         params JsonElement[] joined)
     {
-        return source.RootElement.MergeInto(path, caseSensitive, (IEnumerable<JsonElement>)joined);
+        return source.RootElement.MergeInto(path, caseSensitive, joined);
     }
 
     /// <summary>
@@ -213,7 +192,7 @@ static partial class JsonExtensions
         bool caseSensitive,
         IEnumerable<JsonElement> joined)
     {
-        return source.Replace(path, OnMerge);
+        return source.Replace(path, OnMerge, caseSensitive);
 
         JsonElement? OnMerge(JsonElement target, IImmutableList<string> breadcrumb)
         {
