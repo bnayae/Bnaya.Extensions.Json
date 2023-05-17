@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 using Xunit;
 using Xunit.Abstractions;
 
@@ -17,8 +19,11 @@ namespace System.Text.Json.Extension.Extensions.Tests
         public void Filter_Gt30_Test()
         {
             var source = JsonDocument.Parse(JSON_INDENT);
-            var target = source.Filter((e, _) =>
-            {
+
+            TraverseInstruction Strategy(
+                            JsonElement e,
+                            IImmutableList<string> breadcrumbs)
+            { 
                 if (e.ValueKind == JsonValueKind.Number)
                 {
                     var val = e.GetInt32();
@@ -29,7 +34,9 @@ namespace System.Text.Json.Extension.Extensions.Tests
                 if (e.ValueKind == JsonValueKind.Array || e.ValueKind == JsonValueKind.Object)
                     return TraverseInstruction.ToChildren;
                 return TraverseInstruction.TakeOrReplace;
-            });
+            }
+
+            JsonElement target = source.Filter(Strategy);
 
             Write(source, target);
             Assert.Equal(

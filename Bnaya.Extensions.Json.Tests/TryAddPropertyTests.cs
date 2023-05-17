@@ -52,6 +52,8 @@ namespace System.Text.Json.Extension.Extensions.Tests
 
         #endregion // CaseSensitive
 
+        #region TryAdd_WithPath_Test
+
         [Theory]
         [InlineData(""" 
                         { 
@@ -143,6 +145,8 @@ namespace System.Text.Json.Extension.Extensions.Tests
             var expectedResult = JsonDocument.Parse(expected.Replace('\'', '"')).RootElement;
             Assert.Equal(expectedResult.AsString(), result.AsString());
         }
+
+        #endregion // TryAdd_WithPath_Test
 
         #region TryAdd_Test
 

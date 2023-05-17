@@ -34,81 +34,89 @@ Rely on path convention:
 
 `json.ToEnumerable(/path convention/);`
 
-JSON:
->``` json
->{
->  "friends": [
->    {
->      "name": "Yaron",    
->      "id": 1
->    },
->    {
->      "name": "Aviad",   
->      "id": 2
->    }
->  ]
->}
->```
 
-CODE: 
-> ``` cs
-> var items = source.ToEnumerable("friends.[].name");
-> ```
-> OR
-> ``` cs
-> var items = source.ToEnumerable("friends.*.name");
-> ```
-> 
-> RESULT
-> ``` json
-> ["Yaron", "Aviad"]
-> ```
+<details><summary>Json</summary>
+<blockquote>
 
-CODE: 
-> ``` cs
-> var items = source.ToEnumerable("");
-> ```
-> OR
-> ``` cs
-> var items = source.ToEnumerable("");
-> ```
-> 
-> RESULT
-> ``` json
-> [
-> ```
+``` json
+{
+  "friends": [
+    {
+      "name": "Yaron",    
+      "id": 1
+    },
+    {
+      "name": "Aviad",   
+      "id": 2
+    }
+  ]
+}
+```
 
-CODE: 
-> ``` cs
-> var items = source.ToEnumerable("friends.[0].name");
-> ```
-> 
-> RESULT
-> ``` json
-> ["Yaron"]
-> ```
+</blockquote>
+</details>
 
-CODE: 
-> ``` cs
-> var items = source.ToEnumerable("friends.[0].*");
-> ```
-> OR
-> ``` cs
-> var items = source.ToEnumerable("");
-> ```
-> 
-> RESULT
-> ``` json
-> ["Yaron",1]
-> ```
+
+<details><summary>Sample: `friends.[].name` or `friends.*.name`</summary>
+<blockquote>
+
+``` cs
+var items = source.ToEnumerable("friends.[].name");
+```
+OR
+``` cs
+var items = source.ToEnumerable("friends.*.name");
+```
+
+RESULT
+``` json
+["Yaron", "Aviad"]
+```
+
+</blockquote>
+</details>
+
+<details><summary>Sample: `friends.[0].name`</summary>
+<blockquote>
+
+``` cs
+var items = source.ToEnumerable("friends.[0].name");
+```
+
+RESULT
+``` json
+["Yaron"]
+```
+
+</blockquote>
+</details>
+
+<details><summary>Sample: `friends.[0].*`</summary>
+<blockquote>
+
+``` cs
+var items = source.ToEnumerable("friends.[0].*");
+```
+
+RESULT
+``` json
+["Yaron",1]
+```
+
+</blockquote>
+</details>
 
 *See: YieldWhen_Path_Test in the source code*
 
-### Yield with predicate
+### Predicate based enumeration
 
 Yield element according to predicate and onMatch delegates.  
 
-JSON:
+### Sample:
+
+<details><summary>Json</summary>
+<blockquote>
+
 ``` json
 {
     "projects": [ {
@@ -129,35 +137,41 @@ JSON:
 }
 ```
 
-### Sample:
-> ``` cs
-> using static System.Text.Json.TraverseFlowInstruction;
-> 
-> var items = source.ToEnumerable((json, deep, breadcrumbs) =>
-> {
->     if(breadcrumbs.Count < 4)
->         return Drill;
-> 
->     if (breadcrumbs[^4] == "relationship" &&
->         breadcrumbs[^3] == "projects" &&
->         breadcrumbs[^1] == "key")
->     {
->         //return Drill;
->         return Yield;
->     }
-> 
->     return Drill;
-> });
-> 
-> // "cloud-d", "cloud-x"
-> var results = items.Select(m => m.GetString()).ToArray();
-> ```
+</blockquote>
+</details>
+
+<details><summary>Code</summary>
+<blockquote>
+
+``` cs
+TraverseInstruction Predicate(JsonElement current, IImmutableList<string> breadcrumbs)
+{
+    if (breadcrumbs.Count < 4)
+        return ToChildren;
+
+    if (breadcrumbs[^4] == "relationship" &&
+        breadcrumbs[^3] == "projects" &&
+        breadcrumbs[^1] == "key")
+    {
+        return new TraverseInstruction(Stop, TraverseAction.Take);
+    }
+
+    return ToChildren;
+}
+var items = source.ToEnumerable(Predicate);
+```
+
+</blockquote>
+</details>
 
 ---
 
 ## Filter
 
-Reduce (or modify) the json
+Reduce (or modify) a json
+
+<details><summary>Json</summary>
+<blockquote>
 
 JSON:
 ``` json
@@ -173,22 +187,44 @@ JSON:
 }
 ```
 
-### Sample:
-> ``` cs
-> JsonElement source = ..;
-> var target = source.Filter((e, _, _) =>
->             e.ValueKind != JsonValueKind.Number || e.GetInt32() > 30 
->             ? TraverseFlowWrite.Drill 
->             : TraverseFlowWrite.Skip);
-> ```
-> Will result in:
-> ``` cs
-> {
->   "B": [ { "Val": 40 }],
->   "C": [ 50, 100 ],
->   "Note": "Re-shape json"
-> }
-> ```
+</blockquote>
+</details>
+
+
+<details><summary>Code</summary>
+<blockquote>
+
+``` cs
+
+TraverseInstruction Strategy(
+                JsonElement e,
+                IImmutableList<string> breadcrumbs)
+{ 
+    if (e.ValueKind == JsonValueKind.Number)
+    {
+        var val = e.GetInt32();
+        if (val > 30)
+            return TraverseInstruction.TakeOrReplace;
+        return TraverseInstruction.SkipToSibling;
+    }
+    if (e.ValueKind == JsonValueKind.Array || e.ValueKind == JsonValueKind.Object)
+        return TraverseInstruction.ToChildren;
+    return TraverseInstruction.TakeOrReplace;
+}
+
+JsonElement target = source.Filter(Strategy);
+```
+Will result in:
+``` cs
+{
+  "B": [ { "Val": 40 }],
+  "C": [ 50, 100 ],
+  "Note": "Re-shape json"
+}
+```
+
+</blockquote>
+</details>
 
 ---
 
@@ -196,7 +232,9 @@ JSON:
 
 *Path based Filter*
 
-JSON:
+
+<details><summary>Json</summary>
+<blockquote>
 ``` json
 {
   "A": 10,
@@ -210,53 +248,76 @@ JSON:
 }
 ```
 
-### Sample 1:
+</blockquote>
+</details>
 
-> ``` cs
-> var target = source.Keep("B.*.val");
-> ```
-> 
-> RESULT
->
-> ``` json
-> {"B":[{"Val":40},{"Val":20}]}
-> ```
+<details><summary>Sample: B.*.val</summary>
+<blockquote>
 
-### Sample 2:
+``` cs
+var target = source.Keep("B.*.val");
+```
 
-> ``` cs
-> var target = source.Keep("B.[]");
-> ```
-> 
-> RESULT
-> 
-> ``` json
-> {"B":[{"Val":40},{"Val":20},{"Factor":20}]}
-> ```
+RESULT
 
-### Sample 3:
+``` json
+{"B":[{"Val":40},{"Val":20}]}
+```
 
-> ``` cs
-> var target = source.Keep("B.[].Factor");
-> ```
-> 
-> RESULT
-> 
-> ``` json
-> {"B":[{"Factor":20}]}
-> ```
+</blockquote>
+</details>
 
-### Sample 4:
 
-> ``` cs
-> var target = source.Keep("B.[1].val");
-> ```
-> 
-> RESULT
-> 
-> ``` json
-> {"B":[{"Val":20}]}
-> ```
+
+<details><summary>Sample: B.[]</summary>
+<blockquote>
+
+``` cs
+var target = source.Keep("B.[]");
+```
+
+RESULT
+
+``` json
+{"B":[{"Val":40},{"Val":20},{"Factor":20}]}
+```
+
+</blockquote>
+</details>
+
+
+
+<details><summary>Sample: B.[1].val</summary>
+<blockquote>
+
+``` cs
+var target = source.Keep("B.[].Factor");
+```
+
+RESULT
+
+``` json
+{"B":[{"Factor":20}]}
+```
+
+</blockquote>
+</details>
+
+<details><summary>Sample: B.[1].val</summary>
+<blockquote>
+
+``` cs
+var target = source.Keep("B.[1].val");
+```
+
+RESULT
+
+``` json
+{"B":[{"Val":20}]}
+```
+
+</blockquote>
+</details>
 
 ---
 
@@ -264,6 +325,9 @@ JSON:
 
 Remove elements from the json.
 
+<details><summary>Json</summary>
+<blockquote>
+
 ``` json
 {
   "A": 10,
@@ -277,19 +341,11 @@ Remove elements from the json.
 }
 ```
 
-### Sample 1:
+</blockquote>
+</details>
 
-> ``` cs
-> var target = source.Remove("");
-> ```
-> 
-> RESULT
-> 
-> ``` json
-> 
-> ```
-
-### Sample 2:
+<details><summary>Sample: B.[]</summary>
+<blockquote>
 
 > ``` cs
 > var target = source.Remove("B.[]");
@@ -298,10 +354,14 @@ Remove elements from the json.
 > RESULT
 > 
 > ``` json
-> {"A":10,"B":[],"C":[],"Note":"Re-shape json"}
+> {"A":10,"C":[0,25,50,100],"Note":"Re-shape json"}
 > ```
 
-### Sample 3:
+</blockquote>
+</details>
+
+<details><summary>Sample: B.*.val</summary>
+<blockquote>
 
 > ``` cs
 > var target = source.Remove("B.*.val");
@@ -313,7 +373,11 @@ Remove elements from the json.
 > {"A":10,"B":[{"Factor":20}],"C":[0,25,50,100],"Note":"Re-shape json"}
 > ```
 
-### Sample 4:
+</blockquote>
+</details>
+
+<details><summary>Sample: B.[1]</summary>
+<blockquote>
 
 > ``` cs
 > var target = source.Remove("B.[1]");
@@ -322,8 +386,43 @@ Remove elements from the json.
 > RESULT
 > 
 > ``` json
-> {"A":10,"B":[{"Val":40},{"Factor":20}],"C":[0,50,100],"Note":"Re-shape json"}
+> {"A":10,"B":[{"Val":40},{"Factor":20}],"C":[0,25,50,100],"Note":"Re-shape json"}
 > ```
+
+</blockquote>
+</details>
+
+<details><summary>Sample: B</summary>
+<blockquote>
+
+> ``` cs
+> var target = source.Remove("B");
+> ```
+> 
+> RESULT
+> 
+> ``` json
+> {"A":10,"C":[0,25,50,100],"Note":"Re-shape json"}
+> ```
+
+</blockquote>
+</details>
+
+<details><summary>Sample: B.[1].val</summary>
+<blockquote>
+
+> ``` cs
+> var target = source.Remove("B.[1].val");
+> ```
+> 
+> RESULT
+> 
+> ``` json
+> {"A":10,"B":[{"Val":40},{"Val":20},{"Factor":20}],"C":[0,25,50,100],"Note":"Re-shape json"}
+> ```
+
+</blockquote>
+</details>
 
 ---
 
@@ -331,106 +430,128 @@ Remove elements from the json.
 
 Try to add property if missing.
 
-### Sample 1
 
-> ```json
-> { "A": 0, "B": 0 }
-> ```
-> 
-> ```cs
-> source.RootElement.TryAddProperty("C", 1);
-> ```
-> 
-> Result in:
-> ```json
-> { "A": 0, "B": 0, "C": 1 }
-> ```
+<details><summary>Sample 1</summary>
+<blockquote>
 
-### Sample 2
+```json
+{ "A": 0, "B": 0 }
+```
 
-> ```json
-> { "A": 0, "B": 0, "C": 0 }
-> ```
-> 
-> ```cs
-> source.RootElement.TryAddProperty("C", 1);
-> ```
-> 
-> Result in:
-> ```json
-> { "A": 0, "B": 0, "C": 0 }
-> ```
+```cs
+source.RootElement.TryAddProperty("C", 1);
+```
 
+Result in:
+```json
+{ "A": 0, "B": 0, "C": 1 }
+```
 
-### Sample 3
+</blockquote>
+</details>
 
-> ```json
-> { "A": 0, "B": 0, "C": null }
-> ```
-> 
-> ```cs
-> var source = JsonDocument.Parse(json);
-> source.RootElement.TryAddProperty("C", 1);
-> ```
-> 
-> Result in:
-> ```json
-> { "A": 0, "B": 0, "C": 1 }
-> ```
+<details><summary>Sample 2</summary>
+<blockquote>
+
+```json
+{ "A": 0, "B": 0, "C": 0 }
+```
+
+```cs
+source.RootElement.TryAddProperty("C", 1);
+```
+
+Result in:
+```json
+{ "A": 0, "B": 0, "C": 0 }
+```
+
+</blockquote>
+</details>
+
+<details><summary>Sample: 3</summary>
+<blockquote>
+
+```json
+{ "A": 0, "B": 0, "C": null }
+```
+
+```cs
+var source = JsonDocument.Parse(json);
+source.RootElement.TryAddProperty("C", 1);
+```
+
+Result in:
+```json
+{ "A": 0, "B": 0, "C": 1 }
+```
+
+</blockquote>
+</details>
 
 *Unless sets the options not to ignore null*
 
-### Sample 3 
 
-> *Ignored null*
-> 
-> ```cs
-> var options = new JsonPropertyModificatonOpions
-> {
->     IgnoreNull = false
-> };
-> var source = JsonDocument.Parse(json);
-> source.RootElement.TryAddProperty("C", 1);
-> ```
-> 
-> Result in:
-> ```json
-> { "A": 0, "B": 0, "C": null }
-> ```
+<details><summary>Sample: ignored null</summary>
+<blockquote>
 
-### Sample 4
+*Ignored null*
 
-> *Changing property within a path*
-> 
-> ```json
-> {
->   "X": {
->     "Y": {
->     	"A": 0,
->     	"B": 0
->     }
->   },
->   "Y": { "Q": 2 }
-> }
-> ```
-> 
-> ```cs
-> source.RootElement.TryAddProperty("X.Y", "C", 1);
-> ```
-> 
-> Result in:
-> ```json
-> {
->   "X": {
->       "Y": {
->           "A": 0,
->           "B": 0,  
->           "C": 1
->       }
->   },
->   "Y": { "Q": 2 }
-> }
-> ```
+```cs
+var options = new JsonPropertyModificatonOpions
+{
+    IgnoreNull = false
+};
+var source = JsonDocument.Parse(json);
+source.RootElement.TryAddProperty("C", 1);
+```
+
+Result in:
+```json
+{ "A": 0, "B": 0, "C": null }
+```
+
+</blockquote>
+</details>
+
+
+<details><summary>Sample: Changing property within a path</summary>
+<blockquote>
+
+*Changing property within a path*
+
+```json
+{
+  "X": {
+    "Y": {
+    	"A": 0,
+    	"B": 0
+    }
+  },
+  "Y": { "Q": 2 }
+}
+```
+
+```cs
+source.RootElement.TryAddProperty("X.Y", "C", 1);
+```
+
+Result in:
+```json
+{
+  "X": {
+      "Y": {
+          "A": 0,
+          "B": 0,  
+          "C": 1
+      }
+  },
+  "Y": { "Q": 2 }
+}
+```
+
+</blockquote>
+</details>
 
 --- 
 
@@ -438,6 +559,10 @@ Try to add property if missing.
 
 Try to get a value within a path
 
+
+<details><summary>Json</summary>
+<blockquote>
+
 ``` json
 {
   "B": {
@@ -456,27 +581,39 @@ Try to get a value within a path
 }
 ```
 
-### Sample 1 
+</blockquote>
+</details>
 
-> ```cs
-> source.TryGetValue(out JsonElement value, "B.B1")
-> ```
-> 
-> Result in:
-> ```json
-> ["Very","Cool"]
-> ```
+<details><summary>Sample: B.B1</summary>
+<blockquote>
 
-### Sample 2 
+```cs
+source.TryGetValue(out JsonElement value, "B.B1")
+```
 
-> ```cs
-> source.TryGetValue(out JsonElement value, "B.B1.*")
-> ```
-> 
-> Result in:
-> ```json
-> Very
-> ```
+Result in:
+```json
+["Very","Cool"]
+```
+
+</blockquote>
+</details>
+
+
+<details><summary>Sample: B.B1.*</summary>
+<blockquote>
+
+```cs
+source.TryGetValue(out JsonElement value, "B.B1.*")
+```
+
+Result in:
+```json
+Very
+```
+
+</blockquote>
+</details>
 
 
 ## TryGet...
@@ -484,6 +621,9 @@ Try to get a value within a path
 Try to get a value within a path.
 
 
+<details><summary>Json</summary>
+<blockquote>
+
 ``` json
 {
   "B": {
@@ -502,29 +642,44 @@ Try to get a value within a path.
 }
 ```
 
-### String 
+</blockquote>
+</details>
 
-> ```cs
-> source.TryGetString(out JsonElement value, "B.B2.*.B211")
-> ```
-> 
-> Result in: `OK`
+<details><summary>Sample: String</summary>
+<blockquote>
 
-### DateTiemOffset 
+```cs
+source.TryGetString(out JsonElement value, "B.B2.*.B211")
+```
 
-> ```cs
-> source.TryGetValue(out JsonElement value, "B.*.B26")
-> ```
-> 
-> Result in: `2007-09-01T10:35:01+02`
+Result in: `OK`
 
-### Double
+</blockquote>
+</details>
 
-> ```cs
-> source.TryGetNumber(out double value, "B.B2.B24")
-> ```
-> 
-> Result in: `1.8`
+<details><summary>Sample: DateTiemOffset</summary>
+<blockquote>
+
+```cs
+source.TryGetValue(out JsonElement value, "B.*.B26")
+```
+
+Result in: `2007-09-01T10:35:01+02`
+
+</blockquote>
+</details>
+
+<details><summary>Sample: Double</summary>
+<blockquote>
+
+```cs
+source.TryGetNumber(out double value, "B.B2.B24")
+```
+
+Result in: `1.8`
+
+</blockquote>
+</details>
 
 ---
 
@@ -533,139 +688,151 @@ Try to get a value within a path.
 Merging 2 or more json.
 The last json will override previous on conflicts
 
-###  Sample 1
+<details><summary>Sample: 1</summary>
+<blockquote>
 
-> Source: `{ "A": 1 }` ,  Merged:  `{ "B": 2 }`
-> 
-> ```cs
-> var target = source.Merge(merged);
-> ```
-> 
-> Result in: `{"A":1,"b":2}`
+Source: `{ "A": 1 }` ,  Merged:  `{ "B": 2 }`
 
-###  Sample 2
+```cs
+var target = source.Merge(merged);
+```
 
-> Source: `{ "A": 1 }` ,  Merged:  `{"B":2,"C":3}`
-> 
-> ```cs
-> var target = source.Merge(merged);
-> ```
-> 
-> Result in: `{ "A":1, "B":2, "C":3 }`
+Result in: `{"A":1,"b":2}`
 
-###  Sample 3
+</blockquote>
+</details>
 
-> Source: `{ "A": 1 }` ,  Merged1:  `{"B":2}` , Merged2: `{"C":3}`
-> 
-> ```cs
-> var target = source.Merge(merged1, merged2);
-> ```
-> 
-> Result in: `{ "A":1, "B":2, "C":3 }`
 
-###  Sample 4
+<details><summary>Sample: 2</summary>
+<blockquote>
 
-> Source: `{ "A": 1 }` 
-> 
-> ```cs
-> var target = source.MergeObject(new { b = 2 });
-> ```
-> 
-> Result in: `{"A":1, "B":2}`
+Source: `{ "A": 1 }` ,  Merged:  `{"B":2,"C":3}`
+
+```cs
+var target = source.Merge(merged);
+```
+
+Result in: `{ "A":1, "B":2, "C":3 }`
+
+</blockquote>
+</details>
+
+
+<details><summary>Sample: </summary>
+<blockquote>
+
+Source: `{ "A": 1 }` ,  Merged1:  `{"B":2}` , Merged2: `{"C":3}`
+
+```cs
+var target = source.Merge(merged1, merged2);
+```
+
+Result in: `{ "A":1, "B":2, "C":3 }`
+
+</blockquote>
+</details>
+
+
+<details><summary>Sample: </summary>
+<blockquote>
+
+Source: `{ "A": 1 }` 
+
+```cs
+var target = source.MergeObject(new { b = 2 });
+```
+
+Result in: `{"A":1, "B":2}`
+
+</blockquote>
+</details>
 
 ### Merge Into
 
 Merging json into specific path of a source json.  
 > *The last json will override any previous one in case of a conflicts*
 
-Source
+<details><summary>Sample: 1</summary>
+<blockquote>
 
+Source
 ``` json
-{ "A": 1, "B": { "B1":[1, 2, 3] } }
+{ "A": 1, "B": { "B1":[1, 2, 3] }, "C": { "D": { "X":1, "Y":2 } } }
 ```
 
-###  Sample 1
+```cs
+var target = source.MergeInto("C.D.X", 100);
+```
 
-> Source
-> ``` json
-> { "C": { "D": { "X":1, "Y":2 } } }
-> ```
->
-> Merged
-> ``` json
-> { "Z": 3 }
-> ```
-> 
-> ```cs
-> var target = source.MergeInto("C.D", merged);
-> ```
-> 
-> Result in: `{ "C": { "D": { "X":1, "Y":2, "Z": 3 } } }`
+Result in: `{ "A": 1, "B": { "B1":[1, 2, 3] }, "C": { "D": { "X":100, "Y":2 } } }`
 
 
-###  Sample 2
+</blockquote>
+</details>
 
-> Merged
-> ``` json
-> { 5 }
-> ```
->
-> ```cs
-> var target = source.MergeInto("B.B1.[1]", merged);
-> ```
-> 
-> Result in: `{ "A": 1, "B": { "B1":[1, 5, 3] } }`
+<details><summary>Sample: 2</summary>
+<blockquote>
 
+Source
+``` json
+{ "A": 1, "B": { "B1":[1, 2, 3] }, "C": { "D": { "X":1, "Y":2 } } }
+```
 
-###  Sample 3
+Merged
+``` json
+{ "Z": 3}
+```
 
-> Source
-> ``` json
-> { "C": { "D": { "X":1, "Y":2 } } }
-> ```
-> 
-> Merged
-> ``` json
-> {  "Z": 3 }
-> ```
->
-> ```cs
-> var target = source.MergeInto("C.D", merged);
-> ```
-> 
-> Result in: `{ "C": { "D": { "X":1, "Y":2, "Z": 3 } } }`
+```cs
+var target = source.MergeInto("C.D", merged);
+```
+
+Result in: `{ "A": 1, "B": { "B1":[1, 2, 3] }, "C": { "D": { "X":1, "Y":2, "Z": 3 } } }`
 
 
-###  Sample 4
+</blockquote>
+</details>
 
-> ```cs
-> var target = source.MergeInto("B.B1.[1]", 5);
-> ```
-> 
-> Result in: `{ "A": 1, "B": { "B1":[1, 5, 3] } }`
+<details><summary>Sample: 3</summary>
+<blockquote>
+
+Source
+``` json
+{'A':1,'B': {'B1':1}}
+```
+
+Merged
+``` json
+{'B1':3, 'C':[1,2,3]}
+```
+
+```cs
+var target = source.MergeInto("B", merged);
+```
+
+Result in: `{'A':1, 'B':{'B1':3, 'C':[1,2,3]}}`
 
 
-###  Sample 5
+</blockquote>
+</details>
 
-> ```cs
-> var merged = new { New = "Object"}; // anonymous type
-> var target = source.MergeInto("B.B1.[1]", merged);
-> ```
-> 
-> Result in: `{ "A": 1, "B": { "B1":[1, {"New":"Object"}, 3] }`
+<details><summary>Sample: 4</summary>
+<blockquote>
 
-###  Sample 6
+Source
+``` json
+{'A':1,'B':{'B1':[1,2,3]}}
+```
 
-> Source
-> ``` json
-> { "C": { "D": { "X":1, "Y":2 } } }
-> ```
-> 
-> ```cs
-> var target = source.MergeInto("C.D", new { Z = 3 });
-> ```
-> 
-> Result in: `{ "C": { "D": { "X":1, "Y":2, "Z": 3 } } }`
+```cs
+var target = source.MergeInto("B.B1.[1]", 5);
+```
+
+Result in: `{'A':1, 'B':{'B1':[1,5,3]}}`
+
+
+</blockquote>
+</details>
 
 ## Serialization
 
