@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.IO;
 
 using Xunit;
 using Xunit.Abstractions;
@@ -8,9 +7,6 @@ namespace System.Text.Json.Extension.Extensions.Tests
 {
     public class TraverseTests
     {
-        private static readonly JsonWriterOptions OPT_INDENT =
-                        new JsonWriterOptions { Indented = true };
-
         private readonly ITestOutputHelper _outputHelper;
 
         #region Ctor

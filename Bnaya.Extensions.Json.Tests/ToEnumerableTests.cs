@@ -1,21 +1,20 @@
 using System;
 using System.Collections.Immutable;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 using Xunit;
 using Xunit.Abstractions;
 
-using static System.Text.Json.TraverseFlowInstruction;
+using static System.Text.Json.TraverseFlow;
+using static System.Text.Json.TraverseInstruction;
 
 namespace System.Text.Json.Extension.Extensions.Tests
 {
-    public class YieldWhenTests: BaseTests
+    public class ToEnumerableTests : BaseTests
     {
         #region Ctor
 
-        public YieldWhenTests(ITestOutputHelper outputHelper): base(outputHelper) { }
+        public ToEnumerableTests(ITestOutputHelper outputHelper) : base(outputHelper) { }
 
         #endregion Ctor
 
@@ -81,19 +80,19 @@ namespace System.Text.Json.Extension.Extensions.Tests
         {
             var source = JsonDocument.Parse(JSON_INDENT);
 
-            TraverseFlowInstruction Predicate(JsonElement json, int deep, IImmutableList<string> breadcrumbs)
-            { 
-                if(breadcrumbs.Count < 4)
-                    return Drill;
+            TraverseInstruction Predicate(JsonElement current, IImmutableList<string> breadcrumbs)
+            {
+                if (breadcrumbs.Count < 4)
+                    return ToChildren;
 
                 if (breadcrumbs[^4] == "relationship" &&
                     breadcrumbs[^3] == "projects" &&
                     breadcrumbs[^1] == "key")
                 {
-                    return Yield;
+                    return new TraverseInstruction(Stop, TraverseAction.TakeOrReplace);
                 }
 
-                return Drill;
+                return ToChildren;
             }
             var items = source.ToEnumerable(Predicate);
             var results = items.Select(m => m.GetString()).ToArray();

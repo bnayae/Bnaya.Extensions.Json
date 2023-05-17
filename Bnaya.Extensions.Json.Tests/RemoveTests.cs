@@ -1,17 +1,13 @@
-using System.Collections.Immutable;
-
-using FakeItEasy;
-
 using Xunit;
 using Xunit.Abstractions;
 
 namespace System.Text.Json.Extension.Extensions.Tests
 {
-    public class RemoveTests: BaseTests
+    public class RemoveTests : BaseTests
     {
         #region Ctor
 
-        public RemoveTests(ITestOutputHelper outputHelper): base(outputHelper) { }
+        public RemoveTests(ITestOutputHelper outputHelper) : base(outputHelper) { }
 
         #endregion Ctor
 
@@ -19,13 +15,13 @@ namespace System.Text.Json.Extension.Extensions.Tests
 
         [Theory]
         [InlineData("B.[]", """
-                                        {"A":10,"B":[],"C":[],"Note":"Re-shape json"}
+                                        {"A":10,"C":[0,25,50,100],"Note":"Re-shape json"}
                                         """)]
         [InlineData("B.*.val", """
                                         {"A":10,"B":[{"Factor":20}],"C":[0,25,50,100],"Note":"Re-shape json"}
                                         """)]
         [InlineData("B.[1]", """
-                                        {"A":10,"B":[{"Val":40},{"Factor":20}],"C":[0,50,100],"Note":"Re-shape json"}
+                                        {"A":10,"B":[{"Val":40},{"Factor":20}],"C":[0,25,50,100],"Note":"Re-shape json"}
                                         """)]
         [InlineData("B", """
                                         {"A":10,"C":[0,25,50,100],"Note":"Re-shape json"}
@@ -33,6 +29,14 @@ namespace System.Text.Json.Extension.Extensions.Tests
         [InlineData("B.[1].val", """
                                         {"A":10,"B":[{"Val":40},{"Factor":20}],"C":[0,25,50,100],"Note":"Re-shape json"}
                                         """)]
+        [InlineData("B.[1].val", """
+                                        {"A":10,"B":[{"Val":40},{"Val":20},{"Factor":20}],"C":[0,25,50,100],"Note":"Re-shape json"}
+                                        """, 
+                                        true)]
+        [InlineData("*", """
+                                        {}
+                                        """, 
+                                        true)]
 
         public void RemovePath_Test(string path, string expected, bool caseSensitive = false)
         {

@@ -1,17 +1,13 @@
-using System.Collections.Immutable;
-
-using FakeItEasy;
-
 using Xunit;
 using Xunit.Abstractions;
 
 namespace System.Text.Json.Extension.Extensions.Tests
 {
-    public class FilterTests: BaseTests
+    public class FilterTests : BaseTests
     {
         #region Ctor
 
-        public FilterTests(ITestOutputHelper outputHelper): base(outputHelper) { }
+        public FilterTests(ITestOutputHelper outputHelper) : base(outputHelper) { }
 
         #endregion Ctor
 
@@ -21,8 +17,19 @@ namespace System.Text.Json.Extension.Extensions.Tests
         public void Filter_Gt30_Test()
         {
             var source = JsonDocument.Parse(JSON_INDENT);
-            var target = source.RootElement.Filter((e, _, _) =>
-                                    e.ValueKind != JsonValueKind.Number || e.GetInt32() > 30 ? TraverseFlowWrite.Drill : TraverseFlowWrite.Skip);
+            var target = source.Filter((e, _) =>
+            {
+                if (e.ValueKind == JsonValueKind.Number)
+                {
+                    var val = e.GetInt32();
+                    if (val > 30)
+                        return TraverseInstruction.TakeOrReplace;
+                    return TraverseInstruction.SkipToSibling;
+                }
+                if (e.ValueKind == JsonValueKind.Array || e.ValueKind == JsonValueKind.Object)
+                    return TraverseInstruction.ToChildren;
+                return TraverseInstruction.TakeOrReplace;
+            });
 
             Write(source, target);
             Assert.Equal(

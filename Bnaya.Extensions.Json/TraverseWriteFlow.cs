@@ -3,7 +3,7 @@
 /// <summary>
 /// Json's flow traversing direction.
 /// </summary>
-public enum TraverseFlow
+public enum TraverseWriteFlow
 {
     /// <summary>
     /// Drill into child nodes, than proceed to sibling and finally back to parent

@@ -1,20 +1,16 @@
 using System;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 using Xunit;
 using Xunit.Abstractions;
 
-using static System.Text.Json.TraverseFlowInstruction;
-
 namespace System.Text.Json.Extension.Extensions.Tests
 {
-    public class YieldWhenPathTests : BaseTests
+    public class ToEnumerablePathTests : BaseTests
     {
         #region Ctor
 
-        public YieldWhenPathTests(ITestOutputHelper outputHelper): base(outputHelper) { }
+        public ToEnumerablePathTests(ITestOutputHelper outputHelper) : base(outputHelper) { }
 
         #endregion Ctor
 
@@ -48,7 +44,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
 
         #endregion // JSON_INDENT
 
-        #region YieldWhen_Path_Test
+        #region ToEnumerable_Path_Test
 
         [Theory]
         [InlineData("friends.[].name", "Yaron,Aviad,Eyal")]
@@ -61,10 +57,10 @@ namespace System.Text.Json.Extension.Extensions.Tests
         [InlineData("skills.*.level", "3")]
         [InlineData("skills.[3].role.[]", "architect,cto")]
         [InlineData("skills.[3]", @"{""role"":[""architect"",""cto""],""level"":3}")]
-        public void YieldWhen_Path_Test(string path, string expectedJoined)
+        public void ToEnumerable_Path_Test(string path, string expectedJoined)
         {
             var source = JsonDocument.Parse(JSON_INDENT);
-            var items = source.ToEnumerable(path);
+            var items = source.ToEnumerable(path).ToArray();
 
             var results = items.Select(m =>
                 m.ValueKind switch
@@ -80,14 +76,14 @@ namespace System.Text.Json.Extension.Extensions.Tests
             Assert.True(expected.SequenceEqual(results));
         }
 
-        #endregion // YieldWhen_Path_Test
+        #endregion // ToEnumerable_Path_Test
 
-        #region YieldWhen_Path_Array_Test
+        #region ToEnumerable_Path_Array_Test
 
         [Theory]
         [InlineData("skills.[3].role.[]", JsonValueKind.String, "architect")]
         [InlineData("skills.[3].role", JsonValueKind.Array, "architect,cto")]
-        public void YieldWhen_Path_Array_Test(string path, JsonValueKind expectedKind, string expectedJoined)
+        public void ToEnumerable_Path_Array_Test(string path, JsonValueKind expectedKind, string expectedJoined)
         {
             var source = JsonDocument.Parse(JSON_INDENT);
             var item = source.ToEnumerable(path).First();
@@ -100,6 +96,6 @@ namespace System.Text.Json.Extension.Extensions.Tests
             Assert.Equal(expectedJoined, res);
         }
 
-        #endregion // YieldWhen_Path_Array_Test
+        #endregion // ToEnumerable_Path_Array_Test
     }
 }
