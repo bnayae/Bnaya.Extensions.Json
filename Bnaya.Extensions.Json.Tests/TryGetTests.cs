@@ -441,7 +441,7 @@ namespace System.Text.Json.Extension.Extensions.Tests
                 return;
             }
 
-            _outputHelper.WriteLine(reason);
+            _outputHelper.WriteLine($"Reson: {reason}");
 
             Assert.True(succeed);
             Assert.Equal(expected, actual);
