@@ -875,6 +875,6 @@ string result = Encoding.UTF8.GetString(srm.ToArray()) ;
 
 ## Looking for other extensions?
 Check the following
-- [Bnaya.Extensions](https://github.com/bnayae/Bnaya.Extensions.Common)
+- [Bnaya.Extensions.Common](https://github.com/bnayae/Bnaya.Extensions.Common)
 - [Async extensions](https://github.com/bnayae/Bnaya.CSharp.AsyncExtensions)
 
