@@ -873,3 +873,8 @@ var srm = json.ToStream() as MemoryStream;
 string result = Encoding.UTF8.GetString(srm.ToArray()) ;
 ```
 
+## Looking for other extensions?
+Check the following
+- [Bnaya.Extensions.Common](https://github.com/bnayae/Bnaya.Extensions.Common)
+- [Async extensions](https://github.com/bnayae/Bnaya.CSharp.AsyncExtensions)
+
