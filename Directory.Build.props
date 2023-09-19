@@ -14,7 +14,7 @@
 	<PropertyGroup>
 		<Configurations>Debug;Release</Configurations>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<RepositoryUrl>https://github.com/weknow-network/Weknow-Json-Extensions</RepositoryUrl>
+		<RepositoryUrl>https://github.com/bnayae/Bnaya.Extensions.Json</RepositoryUrl>
 		<PackageIcon>icon.png</PackageIcon>
 		<PackageIconUrl />
 		<PackageTags>json, bnaya</PackageTags>
